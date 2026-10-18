@@ -8,9 +8,14 @@ After storage acceptance, check the hardware pages separately. A recovered pool 
 
 These fixes were verified in the running system on 2026-10-18 and saved into its boot overlay. **The revised overlay has not yet passed a reboot or cold-start test.** The earlier unattended reboot proves the original storage/boot setup, not these later changes. No cache was created and no application files were deleted.
 
-## CPU and disk temperatures
+## CPU, motherboard and fan readings
 
-Read the sources before enabling a sensor count:
+Two separate problems produced a dashboard with only a zero-valued system-temperature row:
+
+- The TS-877 adaptation did not map the motherboard temperature or fans. The BMC already exposed real readings, but there was no usable native Linux IPMI device or `ipmitool` in this installation.
+- The dashboard widget created its CPU row only for the `TS-X82` model family. A working native CPU sensor did not by itself make that row visible under this profile.
+
+Read the native temperature sources before changing sensor counts:
 
 ```sh
 for h in /sys/class/hwmon/hwmon*; do
@@ -22,19 +27,75 @@ for h in /sys/class/hwmon/hwmon*; do
 done
 ```
 
-The case kernel exposed `k10temp`, including Tctl and Tccd1. The native QTS HAL supported a CPU temperature source through this model configuration:
+The kernel exposes `k10temp` Tctl and Tccd1. CPU reporting uses QTS's existing `DTS:1` source, not a fabricated BMC replacement. Run `/sbin/get_cpu_temp` with appropriate privileges: an unprivileged zero did not establish a missing sensor. All eight SATA disks already provided their own temperatures; those sources were unchanged.
+
+### Case-specific BMC integration
+
+SMBIOS type 38 identified a KCS interface at I/O address `0xca2`, with successive-byte register spacing. Read-only BMC queries were compared with the BMC sensor page. The accepted mapping on this board was:
+
+| QTS field | Actual source | Example live reading |
+|---|---|---|
+| CPU temperature | Native `k10temp` / QTS `DTS:1` | 66°C |
+| System temperature | BMC motherboard sensor 49 (`0x31`) | 47°C |
+| System fan 1 | BMC FAN2, sensor 97 (`0x61`) | 1500 RPM |
+| System fan 2 | BMC FAN3, sensor 98 (`0x62`) | 2100 RPM |
+
+These are sampled values, not constants. BMC fan readings use a factor of 100 on this host, matching QTS's IPMI fan interpretation. Sensor numbers, scaling, labels and KCS addresses must be re-established on another board or after relevant firmware changes.
+
+A small local Python adapter implements only the sensor-read subset needed by QTS. Its `ipmitool` entry point accepts `raw 0x04 0x2d` for the four explicitly allowed sensor IDs (49, 52, 97, 98); it is **not a general-purpose ipmitool**. It does not change PWM, fan mode, thresholds or BMC settings. It uses a lock, a bounded transaction timeout and refuses a busy KCS transaction or a newly present native kernel IPMI interface. Direct KCS access is specific to this verified host; do not run an independent kernel/userspace KCS driver concurrently.
+
+The resulting live sensor fields are:
 
 ```ini
 [System Enclosure]
-MAX_TEMP_NUM = 1
+MAX_TEMP_NUM = 2
 CPU_TEMP_UNIT = DTS:1
+SYSTEM_TEMP_UNIT = IPMI:49
+MAX_FAN_NUM = 2
+
+[System FAN]
+FAN_UNIT = IPMI
+FAN_1 = I97
+FAN_2 = I98
 ```
 
-This is a verified case setting, not a generic sensor-discovery rule. Preserve the other enclosure fields. In the running system the HAL cache also needed its enclosure temperature count refreshed. After backing up the configuration, `/sbin/hal_app --rescan_model` refreshed the model and made the CPU value visible in QTS. That command is a live configuration operation, not a read-only probe; do not run it during an unrelated storage repair. It logged a CPU-info warning in this case, so acceptance relied on the actual `/sbin/get_cpu_temp` result and Hardware Information page, not the command's invocation alone.
+Preserve all unrelated model fields and disk mappings. QTS's `[Enclosure_0]` in `/etc/hal.conf` also needs matching `max_temp_num` and `max_fan_num` values. The monitoring daemon caches the model: changing the files or probing HAL alone does not prove that `/tmp/em/em_0.info` or the UI has updated. The current procedure may restart **only the hardware-monitor process**, through its standard `daemon_mgr` invocation, when those sensor settings change. It does not rescan storage or reboot the NAS. During diagnosis an unsupported `hal_daemon --help` invocation unexpectedly restarted the monitor; standard arguments were restored. Do not use daemon help probing as a read-only diagnostic.
 
-All eight SATA disks already supplied temperature information; the hardware page now displays those values alongside CPU temperature. Compare the CPU value to the kernel source and disk values to each disk's health page. A count of one does not expose every k10temp channel as a separate QTS sensor.
+The dashboard fix changes the recognized CPU-row condition to require a positive native `cpuTempC` value and removes the model-specific hiding class for that row. It only patches uniquely recognized old/new snippets in `qos-core-widget.js`; an unfamiliar widget is rejected. Refresh the browser cache if it still displays the old widget. No vendor JavaScript or compiled firmware is redistributed here.
 
-**System temperature still reads Not Supported.** This QTS kernel did not expose a usable motherboard sensor/IPMI interface; only k10temp appeared under hwmon. The board's BMC did show motherboard temperatures and fan speeds separately. That does not mean Linux can never read them, or that the sensors are absent. BMC collection and QTS integration were deferred. Keep firmware/BMC fan management in place; do not substitute CPU temperature for motherboard temperature or invent readings.
+### Lightweight automatic recovery after an update
+
+The installed overlay now starts a **one-shot check**, not a resident daemon or scheduled task. It waits at most ten minutes for QTS prerequisites, waits another 30 seconds for startup to settle, then checks once and exits. It never downloads firmware or initiates a reboot.
+
+Before writing, the check requires all of the following:
+
+- The verified motherboard identity/KCS layout and native CPU source, valid real sensor readings, and no competing native IPMI device.
+- QTS 5.2 and exact approved hashes for the HAL/INI libraries, hardware monitor, monitor launcher and Python runtime. A newer release is accepted only if these dependencies still match; changed binaries require review, not automatic allowlist expansion.
+- Recognized model/HAL sensor fields and unique widget patterns. It refuses an unknown or vendor-supplied `ipmitool` rather than overwriting it.
+- Stable files and firmware identity across preflight checks. A firmware version change during the same boot is not patched concurrently with the update.
+
+Only after these checks can it restore the adapter, sensor fields and widget. Changed files are backed up in a root-only temporary directory and replaced atomically. Verification failure restores files still owned by the attempted patch, blocks further automatic repair for that boot and reports the failure. Monitor restart is bounded; no disk, RAID, pool or fan-control commands are part of this repair. The boot overlay keeps the pre-sensor model profile and applies sensor changes **after** compatibility checks; it does not unconditionally inject sensor settings or replace a future native IPMI tool before checking it.
+
+Failures appear through QTS's native `notice_log_tool`, under the **`[Sensor Repair]`** prefix, as System-facility warnings for the administrators group. Notification records were written and read back. External delivery or pop-ups depend on existing QTS notification rules; no rules were changed. Repeated identical status is suppressed within the boot. The status file and boot output are:
+
+```text
+/tmp/qts-sensor-check/status.json
+/tmp/qts-sensor-start.log
+```
+
+On the adapted host, an operator can run a read-only compatibility check:
+
+```sh
+sudo /usr/local/bin/python /qts-profile/sensor-check/check.py --check
+```
+
+The scripts are host-specific installed artifacts, not commands available on a stock QTS installation. This chapter documents the implementation; it is not a universal auto-installer. The temporary backups disappear at reboot; retain the separate boot-overlay backups off-device too.
+
+**Validation:** twelve offline tests covered idempotence, preservation of storage/network sections, rejection of unfamiliar inputs, native-tool preservation, same-boot firmware drift, successful application and failure rollback. Live preflight passed; repeated checks reported no further changes. The actual one-shot entry point completed and exited. CPU, motherboard and both fan rows were visible, and arrays remained complete (`[UU]`, `[UUU]`) with the pre-existing resync continuing. No reboot or firmware upgrade was performed to validate this new hook.
+
+**Limit:** if an updater removes the custom overlay or its boot-loader hook entirely, the check cannot run or notify. It protects only the sensor adaptation, not the other modifications listed in the [update audit](08-updates.md#existing-modification-audit). Successful runtime checks do not establish unattended-upgrade safety.
+
+The following earlier hardware-page capture shows the CPU, DIMMs and disk temperatures; it predates the later motherboard/fan dashboard repair:
 
 ![CPU, 64 GB memory, four DIMM slots and eight disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
 
@@ -116,7 +177,7 @@ Editing `/etc/model.conf` or the live web root alone is insufficient on this RAM
 
 Keep the original boot guards, disk paths and unrelated-OS isolation intact. Before replacing an overlay, verify the boot disk's identity, size, partition geometry and device-mapper target; compare the old file's hash, retain a rollback copy, write a temporary file, read it back and rename it into place. Record the new hash privately. A whole-model rescan warning is not a successful acceptance result.
 
-In this case the new overlay was read back successfully and the artwork helper was manually tested. Both data arrays remained complete (`[UU]`, `[UUU]`). **A future authorized reboot still needs to verify the CPU/DIMM values, all disk temperatures, bay highlights and cache candidate list again.** Recheck these after firmware or BIOS updates too.
+In this case the new overlay was read back successfully and the artwork helper was manually tested. Both data arrays remained complete (`[UU]`, `[UUU]`). The later sensor-check overlay was also backed up and hash-verified on the dedicated boot device. **A future authorized reboot still needs to verify the sensor-check hook, CPU/motherboard/fan readings, DIMM values, all disk temperatures, bay highlights and cache candidate list again.** Recheck these after firmware or BIOS updates too.
 
 Administrative access was verified through SSH and `sudo -n`. Keep credentials out of commands, logs and screenshots. Passwordless administrator access is not required to follow this guide; it was an operator choice in this case, and its reboot persistence was not tested. No sudoers rule or private account details are included here.
 
