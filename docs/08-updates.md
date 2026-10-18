@@ -19,7 +19,7 @@ Keep update notifications distinct from automatic installation. For recovery use
 
 ## Existing modification audit
 
-A read-only review of the live host, its boot-overlay sources and local update evidence on **2026-10-18** found the following. “Stored in the overlay” means it can be reapplied if that overlay still loads; it does not mean the modification remains compatible with a new firmware. No update setting was changed during this audit.
+A read-only review of the live host, its boot-overlay sources and local update evidence on **2026-10-18** found the following. “Stored in the overlay” means it can be reapplied if that overlay still loads; it does not mean the modification remains compatible with a new firmware. No update setting was changed during the initial audit. **This table records the pre-unification state.** The later [unified package](07a-hardware-and-apps.md#unified-one-shot-restoration-package) adds independent recovery/notifications for sensors, the CPU widget, memory, cache eligibility, artwork and MyQNAP metadata; boot-path and privilege-policy boundaries still apply.
 
 | Modification | Persistence mechanism | Update failure mode / existing protection |
 |---|---|---|
@@ -49,7 +49,7 @@ The configured notification/check time remains daily at 04:00. The UI reports th
 
 ## Proposed support for routine updates
 
-**Design target, not deployed:** support ordinary stable TS-X77 / QTS 5.2 maintenance releases without an exact-build allowlist or a new manual review for every changed binary. Major QTS migrations, cross-model firmware changes and unusual hardware/boot-layout changes are outside this target. “Most routine updates” is an engineering goal, not a measured success rate. Native firmware installation remains notification-only until this design is implemented and exercised.
+**Restoration package implemented and installed; automatic firmware installation not deployed.** The goal is ordinary stable TS-X77 / QTS 5.2 maintenance releases without an exact-build allowlist or a new manual review for every changed binary. Major QTS migrations, cross-model firmware changes and unusual hardware/boot-layout changes are outside this target. “Most routine updates” is an engineering goal, not a measured success rate. Native firmware installation remains notification-only until this design is implemented and exercised.
 
 ### Keep one persistent adaptation package
 
@@ -66,7 +66,7 @@ Keep a versioned manifest and original project scripts in the existing support-p
 | MyQNAP index cache | Restore only the known repository entry and deduplicated scheduled task; validate runtime dependencies and XML. Keep the last valid index on fetch failure and report staleness. |
 | Administrative preferences | Keep privilege policy separate. Do not infer permission to recreate passwordless sudo from a sensor/package repair. |
 
-A failed optional module should not prevent the remaining modules from running. Send one summarized QTS notification identifying restored, skipped and failed components. On-disk backups and runtime rollback cover the project's own patches; they are not automatic firmware/storage downgrades.
+The implemented package isolates optional module failures and sends one summarized QTS notification identifying restored, skipped and failed components. On-disk backups and runtime rollback cover the project's own patches; they are not automatic firmware/storage downgrades.
 
 ### A small scheduled update command, not a second updater daemon
 
@@ -78,9 +78,9 @@ After the normal upgrade restart, the one-shot package checks the boot/mapping o
 
 ### Delivery sequence
 
-1. Consolidate the existing boot-time fixes into the independent one-shot modules above; retain the current deployment until the replacement passes offline and live read-only checks.
-2. Exercise one representative maintenance-release update on disposable storage, including hook survival, restored mods and skipped-module notifications. Reuse that integration coverage for structurally compatible releases rather than require a full clone test for every build.
-3. Add the scheduled installer only after the supported official update entry point and first update cycle have been verified, with a separately selected maintenance/reboot policy.
+1. **Completed:** consolidated the fixes into independent one-shot modules, passed 28 repository tests and live preflight/application/idempotence checks, and installed the hash-verified overlay with a rollback backup. No NAS reboot or firmware installation was performed. See [implementation and commands](07a-hardware-and-apps.md#unified-one-shot-restoration-package).
+2. **Pending:** first validate the next authorized boot, then exercise one representative maintenance-release update on disposable storage, including hook survival, restored mods and skipped-module notifications. Reuse that integration coverage for structurally compatible releases rather than require a full clone test for every build.
+3. **Not deployed:** add the scheduled installer only after the supported official update entry point and first update cycle have been verified, with a separately selected maintenance/reboot policy.
 
 The existing local static auditor is a starting point, not this completed controller: it pins an installer-script hash, kernel details and an older hook pattern. Adapt its checks to the actual current boot path; do not present its current static pass as runtime or automatic-install readiness.
 

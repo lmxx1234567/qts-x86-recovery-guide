@@ -1,0 +1,15 @@
+#!/usr/local/bin/python
+# QTS-MODS sensor-only adapter; never a general IPMI utility.
+from __future__ import print_function
+import sys
+sys.path.insert(0,'/qts-profile/mods')
+from kcs_read import command
+try:
+    if len(sys.argv)!=5 or sys.argv[1]!='raw':raise ValueError('Sensor read only')
+    n,c,s=[int(x,0) for x in sys.argv[2:]]
+    if (n,c)!=(4,0x2d) or s not in (49,52,97,98):raise ValueError('Sensor read only')
+    out=command(n,c,[s])
+    if len(out)<4 or out[1]&0x20:raise ValueError('Sensor reading unavailable')
+    print(' '.join('%02x'%v for v in out))
+except Exception as e:
+    print(str(e),file=sys.stderr);sys.exit(1)

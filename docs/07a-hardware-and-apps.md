@@ -63,37 +63,59 @@ Preserve all unrelated model fields and disk mappings. QTS's `[Enclosure_0]` in 
 
 The dashboard fix changes the recognized CPU-row condition to require a positive native `cpuTempC` value and removes the model-specific hiding class for that row. It only patches uniquely recognized old/new snippets in `qos-core-widget.js`; an unfamiliar widget is rejected. Refresh the browser cache if it still displays the old widget. No vendor JavaScript or compiled firmware is redistributed here.
 
-### Lightweight automatic recovery after an update
+### Unified one-shot restoration package
 
-The installed overlay now starts a **one-shot check**, not a resident daemon or scheduled task. It waits at most ten minutes for QTS prerequisites, waits another 30 seconds for startup to settle, then checks once and exits. It never downloads firmware or initiates a reboot.
+The final 2026-10-18 deployment replaces the sensor-only helper with a unified package under `/qts-profile/mods`. Source is in [tools/qts-mods](../tools/qts-mods/reconcile.py); [build_mod_overlay.py](../tools/build_mod_overlay.py) builds an overlay from a reviewed private base, host profile and locally obtained artwork. The package **does not install firmware, reboot the NAS, rebuild privilege rules, create caches or modify disk/pool mappings**.
 
-Before writing, the check requires all of the following:
+The boot entry waits at most ten minutes for prerequisites, waits 30 seconds for QTS startup to settle, performs one reconciliation pass and exits. There is no resident process or periodic mod watchdog. Only the already-existing six-hour MyQNAP metadata-refresh job remains scheduled, now pointing to the package's metadata-only helper.
 
-- The verified motherboard identity/KCS layout and native CPU source, valid real sensor readings, and no competing native IPMI device.
-- QTS 5.2 and exact approved hashes for the HAL/INI libraries, hardware monitor, monitor launcher and Python runtime. A newer release is accepted only if these dependencies still match; changed binaries require review, not automatic allowlist expansion.
-- Recognized model/HAL sensor fields and unique widget patterns. It refuses an unknown or vendor-supplied `ipmitool` rather than overwriting it.
-- Stable files and firmware identity across preflight checks. A firmware version change during the same boot is not patched concurrently with the update.
+| Module | Compatibility and recovery behavior |
+|---|---|
+| Sensors | Check host/KCS identity, exclusive access, real BMC/CPU readings and HAL symbols. Run native HAL probes in bounded subprocesses; after changes, compare HAL temperature/fan scaling with BMC and check the monitoring cache. Preserve unfamiliar/native IPMI tools. |
+| CPU widget | Independently patch a uniquely recognized CPU-row condition and CSS class. Unknown UI structure is skipped even if sensor collection succeeds. |
+| Memory | Match the configured physical bank/locator topology against fresh SMBIOS type-17 records and derive handle offsets. Restore only memory-model fields and stale DIMM cache sections, then verify HAL-populated sizes/offsets. |
+| Cache candidates | Require the accepted eight-bay mapping; restore only the known port mask and verify it through HAL. Never select disks or create an SSD cache. |
+| Artwork | Accept known vendor/prior asset hashes and expected IDs. The original front has six `hd` IDs plus two `ssd` IDs; the replacement has eight `hd` IDs. Unknown/new artwork is preserved and reported rather than overwritten. |
+| MyQNAP index | Validate the local XML route, runtime dependencies and existing repository identity. Restore a missing known registration and replace/deduplicate only the known metadata cron entry, preserving unrelated jobs in both persistent and running crontabs. Fetch/validate a missing index when necessary; never install apps. |
 
-Only after these checks can it restore the adapter, sensor fields and widget. Changed files are backed up in a root-only temporary directory and replaced atomically. Verification failure restores files still owned by the attempted patch, blocks further automatic repair for that boot and reports the failure. Monitor restart is bounded; no disk, RAID, pool or fan-control commands are part of this repair. The boot overlay keeps the pre-sensor model profile and applies sensor changes **after** compatibility checks; it does not unconditionally inject sensor settings or replace a future native IPMI tool before checking it.
+The global gate checks the configured host identity, supported QTS 5.2 family, protected boot/disk/network model sections and PCI paths. It checks firmware identity again before applying each module and rejects a version change during the same boot. The sensor-only package's five exact-binary hashes are no longer the sole compatibility criterion: symbols, bounded native calls and verified readings allow structurally compatible maintenance releases. This is still a **case-specific implementation**, particularly the fixed KCS address/sensor IDs and supported memory/cache layout; editing an example profile does not prove another board compatible.
 
-Failures appear through QTS's native `notice_log_tool`, under the **`[Sensor Repair]`** prefix, as System-facility warnings for the administrators group. Notification records were written and read back. External delivery or pop-ups depend on existing QTS notification rules; no rules were changed. Repeated identical status is suppressed within the boot. The status file and boot output are:
+Each module backs up changed files in a root-only temporary directory, checks for concurrent changes and replaces files atomically. Verification failure rolls back its own changes, retains unrelated/concurrent changes, blocks that module for the rest of the boot and allows other modules to continue. DIMM rollback accounts for HAL's cache-population side effects. Sensor changes may restart only the hardware monitor; no whole-system restart is present.
+
+The builder preserves early boot identity/geometry guards, unrelated-OS exclusion and protected disk/network sections. It removes the old unguarded artwork launch and the old sensor-check launch. Optional memory and cache fields start with neutral defaults; the new modules restore them only after checks. The earlier native CPU source remains configured. A missing loader hook cannot be repaired by a program that never starts.
+
+One summarized QTS System notification uses the **`[QTS Mods]`** prefix and lists each module's restored/OK/skipped outcome. Warnings identify incompatible or failed modules. Identical outcomes are suppressed within a boot. MyQNAP refresh failures preserve the last valid index and report failure/recovery separately. Notification rules and external recipients are not changed.
 
 ```text
-/tmp/qts-sensor-check/status.json
-/tmp/qts-sensor-start.log
+/tmp/qts-mods/status.json       # Per-module results
+/tmp/qts-mods-start.log         # Boot entry output
+/tmp/qts-mods/backups/          # Runtime rollback copies; lost at reboot
 ```
 
-On the adapted host, an operator can run a read-only compatibility check:
+On the adapted host:
 
 ```sh
-sudo /usr/local/bin/python /qts-profile/sensor-check/check.py --check
+# Preflight: do not apply mod changes or fetch a missing index.
+sudo /usr/local/bin/python /qts-profile/mods/reconcile.py --check
+# Apply compatible modules once; no firmware installation or reboot.
+sudo /usr/local/bin/python /qts-profile/mods/reconcile.py
 ```
 
-The scripts are host-specific installed artifacts, not commands available on a stock QTS installation. This chapter documents the implementation; it is not a universal auto-installer. The temporary backups disappear at reboot; retain the separate boot-overlay backups off-device too.
+The [example profile](../tools/qts-mods/profile.example.json) is disabled and incomplete. Keep the real profile private: populate exact protected model sections, board identity, PCI paths, known adapter hashes, physical DIMM locators, artwork hashes/IDs and the existing repository/cron definition. Vendor SVGs, firmware images, private identity and ready-to-flash host overlays are not distributed here. Build only after reviewing those inputs:
 
-**Validation:** twelve offline tests covered idempotence, preservation of storage/network sections, rejection of unfamiliar inputs, native-tool preservation, same-boot firmware drift, successful application and failure rollback. Live preflight passed; repeated checks reported no further changes. The actual one-shot entry point completed and exited. CPU, motherboard and both fan rows were visible, and arrays remained complete (`[UU]`, `[UUU]`) with the pre-existing resync continuing. No reboot or firmware upgrade was performed to validate this new hook.
+```sh
+python3 tools/build_mod_overlay.py \
+  --base private/boot-before.cpio.gz \
+  --profile private/profile.json \
+  --assets private/artwork \
+  --output private/unified.cpio.gz
+```
 
-**Limit:** if an updater removes the custom overlay or its boot-loader hook entirely, the check cannot run or notify. It protects only the sensor adaptation, not the other modifications listed in the [update audit](08-updates.md#existing-modification-audit). Successful runtime checks do not establish unattended-upgrade safety.
+The builder writes a new regular archive and review report; it never mounts or writes a boot device. For the case installation, the separate deployment step verified the dedicated boot SSD identity/geometry and old overlay hash, saved the prior overlay, then wrote and read-back-hashed the new file. Rollback requires the private backup and matching device checks; do not use the other firmware slot as an assumed rollback image.
+
+**Validation:** 28 repository tests passed, including module isolation, unknown-input rejection, idempotence, concurrent-change/symlink protection, cron preservation, subprocess timeout, neutral-memory restoration, DIMM-cache rollback and preservation of early boot guards. QTS Python 2 live preflight passed all six modules. First application updated only the adapter import path and the existing metadata cron entry; a second pass reported all six `ok` with no changes. The metadata helper successfully validated/refreshed 817 application entries without installing packages. The unified overlay was installed and hash-verified with the previous overlay retained.
+
+**Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#proposed-support-for-routine-updates).
 
 The following earlier hardware-page capture shows the CPU, DIMMs and disk temperatures; it predates the later motherboard/fan dashboard repair:
 
@@ -177,7 +199,7 @@ Editing `/etc/model.conf` or the live web root alone is insufficient on this RAM
 
 Keep the original boot guards, disk paths and unrelated-OS isolation intact. Before replacing an overlay, verify the boot disk's identity, size, partition geometry and device-mapper target; compare the old file's hash, retain a rollback copy, write a temporary file, read it back and rename it into place. Record the new hash privately. A whole-model rescan warning is not a successful acceptance result.
 
-In this case the new overlay was read back successfully and the artwork helper was manually tested. Both data arrays remained complete (`[UU]`, `[UUU]`). The later sensor-check overlay was also backed up and hash-verified on the dedicated boot device. **A future authorized reboot still needs to verify the sensor-check hook, CPU/motherboard/fan readings, DIMM values, all disk temperatures, bay highlights and cache candidate list again.** Recheck these after firmware or BIOS updates too.
+In this case the new overlay was read back successfully and the artwork helper was manually tested. Both data arrays remained complete (`[UU]`, `[UUU]`). The later unified mod overlay was also backed up and hash-verified on the dedicated boot device. **A future authorized reboot still needs to verify the unified one-shot hook, CPU/motherboard/fan readings, DIMM values, all disk temperatures, bay highlights and cache candidate list again.** Recheck these after firmware or BIOS updates too.
 
 Administrative access was verified through SSH and `sudo -n`. Keep credentials out of commands, logs and screenshots. Passwordless administrator access is not required to follow this guide; it was an operator choice in this case, and its reboot persistence was not tested. No sudoers rule or private account details are included here.
 

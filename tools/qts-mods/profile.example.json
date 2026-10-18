@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "enabled": false,
+  "release_prefix": "5.2.",
+  "identity_tokens": ["REPLACE_BOARD_PRODUCT", "REPLACE_PRIVATE_BOARD_ID", "KCS (Keyboard Control Style)", "0x0000000000000CA2 (I/O)", "Successive Byte Boundaries"],
+  "protected_sections": {},
+  "pci_paths": [],
+  "known_shims": [],
+  "cache_mask": "0x1FE",
+  "memory_slots": [
+    {"bank": "P0 CHANNEL A", "locator": "DIMM 0", "channel": 1, "dimm": 1},
+    {"bank": "P0 CHANNEL A", "locator": "DIMM 1", "channel": 1, "dimm": 2},
+    {"bank": "P0 CHANNEL B", "locator": "DIMM 0", "channel": 2, "dimm": 1},
+    {"bank": "P0 CHANNEL B", "locator": "DIMM 1", "channel": 2, "dimm": 2}
+  ],
+  "artwork": [],
+  "myqnap": {
+    "section": "REPLACE_EXISTING_REPOSITORY_ID",
+    "fields": {},
+    "old_cron": "REPLACE_EXACT_PREVIOUS_METADATA_REFRESH_JOB"
+  }
+}
