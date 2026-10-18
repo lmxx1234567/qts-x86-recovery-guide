@@ -36,9 +36,9 @@ The full model is copied as a unit by the existing early-init design. Consequent
 
 ### Current automatic-update setting
 
-The live `[Auto Firmware Update]` configuration contained `v3_action_mode = 2`. In this exact firmware's `desktop/Enum.js`, `2` maps to `UPDATE_LATEST`; `FwSettingNotice.js` treats it as an enabled automatic-update mode. Native `auto_update` scheduled entries were also present. Thus the live configuration selects **automatic updates to the latest release**, despite an older local research policy recording automatic installation as disabled. This establishes the configured mode, not that a particular update has already run or will complete.
+The initial 2026-10-18 audit found `v3_action_mode = 2` (`UPDATE_LATEST`) and native update schedules, contrary to an older local research policy. After the operator explicitly requested a change, the QTS firmware-update page was used to select **“Notify me, but do not automatically update firmware.”** Configuration readback confirmed `v3_action_mode = 1` and legacy `action_mode = 2`. No firmware installer/reboot process was running when checked. Arrays remained complete, with the existing resync continuing.
 
-The audit did not disable updates, change application-update policy, reboot or modify storage. Given the boot/mapping dependencies above, use notification-only or manually staged firmware installation until the exact update path is validated. Selecting a different mode is a separate operational change. Recheck the live UI/configuration rather than treating the old local policy file or the mere existence of a cron entry as authoritative.
+The configured notification/check time remains daily at 04:00. The UI reports that no firmware-update delivery rule is configured; no recipients or external channels were added. The notification-only policy prevents automatic firmware installation, but does not itself configure email or push delivery. See the [official policy description](https://docs.qnap.com/operating-system/qts/5.2.x/en-us/updating-the-firmware-automatically-4229F6D2.html). Application-update settings were not changed.
 
 ### Priorities before the next update
 
@@ -46,6 +46,43 @@ The audit did not disable updates, change application-update policy, reboot or m
 2. Stage the exact target firmware and verify overlay loading, boot-device exclusion, unrelated-OS isolation and all eight bay mappings before accepting production operation.
 3. Recheck DIMM topology/cache candidates. Give artwork and metadata-cache helpers explicit compatibility checks and failure reporting before relying on them unattended; this audit did not add those protections.
 4. Verify `[Sensor Repair]` status and real readings, then check applications and administrative access separately. Do not automatically restore sudo privilege changes.
+
+## Proposed support for routine updates
+
+**Design target, not deployed:** support ordinary stable TS-X77 / QTS 5.2 maintenance releases without an exact-build allowlist or a new manual review for every changed binary. Major QTS migrations, cross-model firmware changes and unusual hardware/boot-layout changes are outside this target. “Most routine updates” is an engineering goal, not a measured success rate. Native firmware installation remains notification-only until this design is implemented and exercised.
+
+### Keep one persistent adaptation package
+
+Keep a versioned manifest and original project scripts in the existing support-partition overlay, separate from the two firmware slots. Describe each customization as a small independent module: prerequisites, detection, narrow apply operation, verification and rollback. Preserve the current early boot identity/geometry and disk-isolation guards. After QTS starts, run one bounded reconciliation pass and exit; do not introduce a resident service.
+
+| Component | Routine-update behavior to implement |
+|---|---|
+| Boot and storage mapping | Validate the actual loader hook, required boot tools/modules and known host mapping. Unexpected EFI replacement or partition-writing behavior stops installation; it is not a cosmetic fallback. |
+| Sensors | Keep board/KCS identity, exclusive-access and real-reading checks. Use interface/configuration probes and bounded helper-process tests for the supported release family instead of requiring all five binaries to retain identical hashes. Hashes remain evidence/fast paths, not the only compatibility criterion. A changed HAL still needs successful probes; simply deleting hash checks is not sufficient. |
+| CPU dashboard row | Recognize supported widget structures; leave the new vendor widget untouched if the pattern changes. Sensor collection can remain working even if the optional dashboard row needs a later patch. |
+| DIMM reporting | Re-read SMBIOS and derive slot offsets rather than assume old handles. Update only the memory section/cache after confirming the topology. Failure produces a reporting warning, not a guessed configuration. |
+| Cache candidate mask | Confirm the accepted enclosure port IDs before restoring the mask. Never select disks or create a cache automatically. |
+| Artwork | Check SVG slot IDs and target resource structure. Fall back to vendor artwork on mismatch; do not block firmware installation over a chassis picture. |
+| MyQNAP index cache | Restore only the known repository entry and deduplicated scheduled task; validate runtime dependencies and XML. Keep the last valid index on fetch failure and report staleness. |
+| Administrative preferences | Keep privilege policy separate. Do not infer permission to recreate passwordless sudo from a sensor/package repair. |
+
+A failed optional module should not prevent the remaining modules from running. Send one summarized QTS notification identifying restored, skipped and failed components. On-disk backups and runtime rollback cover the project's own patches; they are not automatic firmware/storage downgrades.
+
+### A small scheduled update command, not a second updater daemon
+
+For future unattended installation, prefer one project-owned scheduled command while the native policy stays notification-only. Its steps are: discover a stable release in the supported family; download the original package; check model, package integrity, required drivers and boot/partition update behavior; confirm storage is healthy and not rebuilding, staging space and configured backups are available; then hand installation and signature verification to the official QTS update path. Avoid constructing another raw firmware writer.
+
+Routine releases that pass these checks need not appear on an exact-version allowlist. Changed boot-critical behavior stops with a notice; optional mod incompatibility normally means skipping that mod. A scheduled script is not a background daemon. The scheduled installer, its maintenance window and any restart permission are **not enabled by the present notification-only request**.
+
+After the normal upgrade restart, the one-shot package checks the boot/mapping outcome, arrays, volumes and service availability, then restores compatible optional modules. Before implementing an installer wrapper, verify the official entry point's completion/reboot semantics: do not assume there is a usable “after write, before reboot” hook. Preserve the overlay through the inspected update path rather than depend on an undocumented interception.
+
+### Delivery sequence
+
+1. Consolidate the existing boot-time fixes into the independent one-shot modules above; retain the current deployment until the replacement passes offline and live read-only checks.
+2. Exercise one representative maintenance-release update on disposable storage, including hook survival, restored mods and skipped-module notifications. Reuse that integration coverage for structurally compatible releases rather than require a full clone test for every build.
+3. Add the scheduled installer only after the supported official update entry point and first update cycle have been verified, with a separately selected maintenance/reboot policy.
+
+The existing local static auditor is a starting point, not this completed controller: it pins an installer-script hash, kernel details and an older hook pattern. Adapt its checks to the actual current boot path; do not present its current static pass as runtime or automatic-install readiness.
 
 ## Why two firmware slots are not rollback
 
