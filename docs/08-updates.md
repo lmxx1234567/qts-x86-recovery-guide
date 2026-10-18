@@ -40,6 +40,10 @@ The initial 2026-10-18 audit found `v3_action_mode = 2` (`UPDATE_LATEST`) and na
 
 The configured notification/check time remains daily at 04:00. The UI reports that no firmware-update delivery rule is configured; no recipients or external channels were added. The notification-only policy prevents automatic firmware installation, but does not itself configure email or push delivery. See the [official policy description](https://docs.qnap.com/operating-system/qts/5.2.x/en-us/updating-the-firmware-automatically-4229F6D2.html). Application-update settings were not changed.
 
+![Firmware settings: notify only, daily check at 04:00, and a warning that delivery rules are not configured](../assets/screenshots/firmware-notify-only.png)
+
+The actual settings-page capture from 2026-10-18 shows **“通知我，但不自动更新”** (notify me, but do not automatically update). The explanatory text says updates will not install automatically. The warning below it concerns missing notification-delivery rules; it is not permission to install firmware. The crop excludes the desktop account, address bar and unrelated notifications. It records the saved policy, not an upgrade or reboot test.
+
 ### Priorities before the next update
 
 1. Verify the actual update mode and retain a tested recovery route and consistent backups. The original storage safeguards remain the highest priority.

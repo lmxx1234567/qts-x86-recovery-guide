@@ -63,6 +63,18 @@ Preserve all unrelated model fields and disk mappings. QTS's `[Enclosure_0]` in 
 
 The dashboard fix changes the recognized CPU-row condition to require a positive native `cpuTempC` value and removes the model-specific hiding class for that row. It only patches uniquely recognized old/new snippets in `qos-core-widget.js`; an unfamiliar widget is rejected. Refresh the browser cache if it still displays the old widget. No vendor JavaScript or compiled firmware is redistributed here.
 
+### Dashboard before and after
+
+These are actual QTS screenshots from 2026-10-18. The **before** crop comes from the original fault report; the **after** crop was captured from the running system after repair and unified-package deployment. Only the hardware panel is included: accounts, IP addresses, host names, browser tabs, shares and online-user rows are outside the crop. No readings were edited or generated. The original captures use different display scales.
+
+| Before repair | After repair |
+|---|---|
+| <img src="../assets/screenshots/dashboard-hardware-before.png" width="340" alt="Before repair: only System at 0 degrees, with no CPU or fan rows"> | <img src="../assets/screenshots/dashboard-hardware-after.png" width="340" alt="After repair: System 48 C, CPU 78 C, and fans at 1500 and 2400 RPM"> |
+
+**What the Web UI patch changes:** the CPU row is no longer limited to the TS-X82 model family, and its model-specific hiding class is removed. The positive native CPU reading can therefore appear in the dashboard. **What the sensor integration changes:** the System row receives the motherboard reading, and two fan rows receive real BMC RPM values. The after image shows the combined result, not an isolated JavaScript-only experiment. Readings vary with load; the temperature change between captures is not a cooling benchmark. QTS truncates the Fahrenheit suffix in this narrow widget; the Celsius values and RPM remain visible.
+
+This capture proves the running dashboard, not persistence through a reboot or firmware upgrade. The faulty zero-valued row also carried a green indicator, so that icon alone was not evidence of working telemetry.
+
 ### Unified one-shot restoration package
 
 The final 2026-10-18 deployment replaces the sensor-only helper with a unified package under `/qts-profile/mods`. Source is in [tools/qts-mods](../tools/qts-mods/reconcile.py); [build_mod_overlay.py](../tools/build_mod_overlay.py) builds an overlay from a reviewed private base, host profile and locally obtained artwork. The package **does not install firmware, reboot the NAS, rebuild privilege rules, create caches or modify disk/pool mappings**.
@@ -157,6 +169,14 @@ Under `/home/httpd/v3_menu/layout/`, the local replacements were:
 | `NAS-873A-G.svg` | `NAS-877-G.svg` |
 
 Back up the actual target files and inspect any `model_0.svg` symlink first. Check that the front SVG contains the expected `hd_0` through `hd_7` elements and verify every populated slot's highlight against the already-accepted HAL map. Slots 7 and 8 were explicitly checked here. The device remains a TS-877 profile; only front/static artwork changed, not rear views, SATA mapping or physical chassis identity.
+
+### Chassis artwork before and after
+
+| Original TS-877 artwork | Patched eight-large-bay artwork |
+|---|---|
+| <img src="../assets/screenshots/chassis-artwork-before.png" width="230" alt="Original chassis drawing with six large bays and two smaller bays"> | <img src="../assets/screenshots/chassis-artwork-after.png" width="230" alt="Patched chassis preview with eight large bays"> |
+
+The left crop is from the historical QTS smart-install welcome screen, before recovery; the right crop is from the later Storage & Snapshots disk preview. They show the two actual UI renderings, **not the same page or a new installer run**. The original screenshot was reused without reopening setup. The patch replaces presentation assets only; the accepted SATA/HAL bay mapping remains separate. The wider disk-preview screenshot below supplies the surrounding context. These crops exclude account, network and disk-identity details.
 
 ![All eight disks in Storage & Snapshots](../assets/screenshots/eight-disks-native-en.jpg)
 
