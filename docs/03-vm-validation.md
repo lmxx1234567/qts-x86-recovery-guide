@@ -1,5 +1,8 @@
 # 3. Validate using disposable virtual disks
 
+For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
+
+
 Use an isolated VM before attaching original disks. The case used 2 vCPUs, 8 GiB RAM, a 64 GiB virtual NVMe boot disk and a new 256 GiB SATA data disk, with autostart disabled and no physical passthrough. Use a private network to avoid duplicate source IPs/hostnames.
 
 ## Required sequence

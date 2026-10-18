@@ -17,6 +17,32 @@ In the observed firmware, diagnostic queries were:
 
 Replace `sgN` with each actual scanned device. The matching `hal_netlink` module was required in the diagnostic environment. Capture complete output rather than reading only the last screenful. Command interfaces may differ by release.
 
+## Concrete Linux topology collection
+
+Run in the intended diagnostic/rescue environment; output contains private serials. These commands enumerate paths without assembling storage:
+
+```sh
+lspci -nnk
+lsscsi -g
+for p in /sys/class/block/sd*; do
+  [ -f "$p/partition" ] && continue
+  echo "BLOCK ${p##*/}"
+  readlink -f "$p/device"
+  cat "$p/device/model" 2>/dev/null
+  udevadm info --query=property --path="$p" 2>/dev/null | grep -E 'ID_SERIAL=|ID_WWN=|ID_PATH='
+done
+for p in /sys/class/scsi_generic/sg*; do
+  echo "SG ${p##*/}"
+  readlink -f "$p/device"
+done
+for p in /sys/class/net/*; do
+  echo "NET ${p##*/}"
+  readlink -f "$p/device"
+done
+```
+
+Match block and sg devices by the resolved SCSI-device path. The enclosing PCI controller path (ending in the controller BDF) is the `DEV_PATH` candidate; do not paste the full `/ata.../host.../target...` leaf as if it were the controller. Record the native path before deciding the controller-relative port. Test candidate ports in diagnostic-only boot with known disk identities; a guessed `ataN - 1` rule is not evidence. Map the NIC's PCI address separately to avoid confusing a disk mapping success with network support.
+
 ## The historical failure and its fix
 
 The scan listed all eight disks in the desired order, with correct model and serial, but individual queries returned `ret=-1`, `port_id=0`. The installer later showed missing disks. Therefore the initial scan-only milestone was **not** acceptance.

@@ -1,5 +1,8 @@
 # 7. Independent boot and data acceptance
 
+For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
+
+
 ## Two defaults to set
 
 **GRUB:** back up the actual configuration on the boot SSD. Choose the normal QTS entry by its verified position or stable menu ID, and set a short visible timeout. Our menu had diagnostic first and normal QTS second, so `default=1`, `timeout=3` selected QTS. Do not copy that index to a different menu.

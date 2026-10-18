@@ -1,5 +1,8 @@
 # 2. Firmware, loader and dependencies
 
+For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
+
+
 ## Select a family, not a CPU marketing name
 
 The observed profile was TS-877 / TS-X77, with QTS 5.2.10.3577 build 20260731 and kernel 5.10.60-qnap. This is a tested version, not a recommendation to install it forever. Check current security advisories and download availability at the [official download center](https://www.qnap.com/en/download).

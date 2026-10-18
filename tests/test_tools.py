@@ -36,6 +36,12 @@ class Tools(unittest.TestCase):
     def test_manifest_escape_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ValueError):manifest.record(d,'../outside')
+    def test_walkthrough_shell_syntax(self):
+        import re, subprocess
+        text=(ROOT/'docs/10-command-walkthrough.md').read_text()
+        for i,block in enumerate(re.findall(r'```(?:bash|sh)\n(.*?)```',text,re.S),1):
+            result=subprocess.run(['bash','-n'],input=block,text=True,capture_output=True)
+            self.assertEqual(result.returncode,0,f'block {i}: {result.stderr}')
     def test_local_markdown_links(self):
         import re
         for p in ROOT.rglob('*.md'):

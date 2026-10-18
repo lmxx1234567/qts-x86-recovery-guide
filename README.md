@@ -24,6 +24,10 @@ flowchart LR
   P --> V[Qtier pool, system volume and shares]
 ```
 
+## Start here: executable walkthrough
+
+After reading scope and backup requirements, follow the [Linux command walkthrough](docs/10-command-walkthrough.md). It supplies dependency installation, firmware extraction, image construction/readback, a disposable QEMU launch, payload ISO creation, explicit-target boot SSD writing, and post-migration checks. The commands distinguish VM and physical profiles; original data disks are never installation targets.
+
 ## Read in this order
 
 | Stage | Guide | Exit condition |
@@ -57,5 +61,7 @@ Run the offline tool tests with Python 3.9+: `python3 -m unittest discover -s te
 One successful host is not a hardware compatibility list. Driver availability, HAL behavior, firmware family, encryption and pool history all matter. QTS, QuTS hero and QuTScloud are different targets. This guide does not bypass firmware signatures, licenses or activation, and does not supply a complete clean-room replacement for the community loader used in the case.
 
 For supported appliance-to-appliance migration, check [QNAP's migration compatibility tool](https://www.qnap.com/en/nas-migration). For uncertain or damaged pools, prefer recovering files to another device over making the pool boot in place.
+
+See the [first-reader audit](docs/first-reader-audit.md) for what the command walkthrough was checked against and what still requires hardware validation.
 
 Contributions with reproducible, sanitized results are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [sources](docs/sources.md).

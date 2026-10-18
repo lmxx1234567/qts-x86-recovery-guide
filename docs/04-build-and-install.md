@@ -1,5 +1,8 @@
 # 4. Build a boot SSD and use virtual CD
 
+For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
+
+
 This chapter describes the complete build contract and installation sequence. It requires a compatible externally obtained base loader; the repository is not a standalone firmware distribution. Work on regular image files first. Never run image-building commands against original data disks.
 
 ## A. Inspect the base image
