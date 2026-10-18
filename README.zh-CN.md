@@ -8,7 +8,7 @@
 
 [实际案例](docs/case-study.md) · [截图记录](docs/screenshots.md) · [盘位映射](docs/05-bay-mapping.md) · [存储池迁移](docs/06-migration.md) · [故障排查](docs/09-troubleshooting.md)
 
-仓库不包含官方固件、第三方引导二进制、私人账号或原始磁盘数据。图中敏感内容已用实色遮挡，原图不发布。
+仓库不包含官方固件、第三方引导二进制、私人账号或原始磁盘数据。
 
 ## 这台自组 QTS 的配置
 
@@ -17,5 +17,3 @@
 ![实机英文界面：CPU、64 GB 内存、四个插槽和温度](assets/screenshots/hardware-status-native-en.jpg)
 
 已修正 CPU 温度、内存拓扑、八大盘位预览和全部八个盘位的缓存资格；没有创建缓存，也没有删除 ARM64 旧应用。主板温度尚未接入 QTS。新增修正已在线验证并保存到启动覆盖包，但尚未重启复验。详见[硬件显示与应用迁移](docs/07a-hardware-and-apps.md)。
-
-本次图片直接采集自英文 UI，通过裁剪排除账号、主机名、IP 和序列号，未伪造界面数值。

@@ -24,7 +24,7 @@ The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the origin
 
 ![Actual English QTS UI showing Ryzen 5800X, 64 GB ECC memory and live temperatures](assets/screenshots/hardware-status-native-en.jpg)
 
-*Captured from the actual English UI and cropped to exclude private identifiers. Motherboard temperature remains Not Supported; the DIMM manufacturer label remains Unknown. Hardware-display and cache-candidate fixes are live-verified and saved in the boot overlay, but their post-change reboot test is still pending. See [hardware and app follow-up](docs/07a-hardware-and-apps.md).*
+*Motherboard temperature remains Not Supported; the DIMM manufacturer label remains Unknown. Hardware-display and cache-candidate fixes are live-verified and saved in the boot overlay, but their post-change reboot test is still pending. See [hardware and app follow-up](docs/07a-hardware-and-apps.md).*
 
 ## What worked
 
@@ -66,7 +66,7 @@ After reading scope and backup requirements, follow the [Linux command walkthrou
 ## Repository contents
 
 - Detailed procedures and failure analysis, with hardware-specific observations clearly labeled.
-- Original screenshots with private identifiers cropped out or redacted; they document milestones, not an integrity guarantee.
+- Screenshots of installation, troubleshooting, recovered storage and hardware status.
 - Configuration templates and a deterministic overlay packer. These do not discover a correct profile for you.
 - A read-only Linux inventory collector and a file manifest tool. Reports contain private identifiers: keep them local.
 - No QNAP firmware, third-party loader binaries, credentials, disk images or customer data.

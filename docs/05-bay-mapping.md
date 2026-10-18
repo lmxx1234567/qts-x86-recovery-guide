@@ -73,7 +73,7 @@ Temperature, fan, activity LEDs and hot-swap behavior require their own tests. S
 
 ## Complete observed profile and final mapping
 
-[Complete case model.conf](../templates/case-x570-model.conf) preserves the working configuration structure without private identifiers. It includes the later live-verified CPU, DIMM and cache-port corrections; its CAP/network settings still do not certify those features. The revised overlay has not yet been reboot-tested. The general template remains intentionally incomplete.
+[Complete case model.conf](../templates/case-x570-model.conf) provides the working configuration structure. It includes the later live-verified CPU, DIMM and cache-port corrections; its CAP/network settings still do not certify those features. The revised overlay has not yet been reboot-tested. The general template remains intentionally incomplete.
 
 This table is transcribed from the final verified mapping record, not the earlier failed-scan screenshot:
 

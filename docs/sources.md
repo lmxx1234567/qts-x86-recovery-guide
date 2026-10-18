@@ -20,4 +20,4 @@ The community loader was obtained as `x77-dom.img.rar` through the [linked distr
 - [Community x77 DOM discussion](https://blog.hx99.net/Tech/2015.html): provenance lead for the externally obtained loader, not an endorsement or an audited build recipe.
 - [qnap-recovery PC1 utility](https://github.com/mkke/qnap-recovery/blob/master/pc1.c): extraction reference. Check licensing and platform integer-width assumptions. No copy is distributed here.
 
-The public repo includes no vendor firmware or community loader binary. Reproducing the boot image requires separately obtaining and reviewing those inputs. Original private logs, full serial-number maps and raw screenshots remain outside the repository. The public case and redacted screenshot journal summarize their evidence and limitations.
+The public repo includes no vendor firmware or community loader binary. Reproducing the boot image requires separately obtaining and reviewing those inputs. The case study and screenshot journal document the observed results and their limitations.

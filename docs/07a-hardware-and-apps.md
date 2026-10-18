@@ -77,9 +77,9 @@ Back up the actual target files and inspect any `model_0.svg` symlink first. Che
 
 ![All eight disks in the native English storage page](../assets/screenshots/eight-disks-native-en.jpg)
 
-![Cropped front preview and selected disk details, with identity fields outside the capture](../assets/screenshots/eight-bay-preview-native-en.jpg)
+![Eight-bay front preview and selected disk details](../assets/screenshots/eight-bay-preview-native-en.jpg)
 
-The crop excludes hostname, IP address and serial number. The `Free` label in the disk list means QTS has not allocated those disks; **bays 6–8 still contain unrelated data and are not safe to initialize**.
+The `Free` label in the disk list means QTS has not allocated those disks; **bays 6–8 still contain unrelated data and are not safe to initialize**.
 
 ## SSD-cache candidates: a slot capability bitmap
 
