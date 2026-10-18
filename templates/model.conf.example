@@ -1,0 +1,26 @@
+# TEMPLATE: merge into a reviewed model profile for the selected firmware.
+# Not a complete universal QNAP hardware definition.
+[System Enclosure]
+VENDOR=QNAP
+MODEL=REPLACE_MODEL_PROFILE
+MAX_DISK_NUM=REPLACE_BAY_COUNT
+DISK_DRV_TYPE=ATA
+
+[System Disk 1]
+DEV_BUS=REPLACE_CONTROLLER_BUS_FORMAT
+DEV_PATH=REPLACE_FULL_SYSFS_CONTROLLER_PATH
+DEV_PORT=REPLACE_CONTROLLER_RELATIVE_PORT
+SLOT_NAME=Disk 1
+
+# Repeat System Disk N for every bay and verify each one.
+# Preserve required CAP, network and platform fields from your reviewed profile.
+
+[Boot Enclosure]
+VENDOR=QNAP
+MODEL=BOOT
+MAX_DISK_NUM=1
+DISK_DRV_TYPE=FLASH
+
+[Boot Disk 1]
+FLASH_SYS_NAME=/dev/mapper/dom
+FLASH_SYS_ID_PREFIX=dom

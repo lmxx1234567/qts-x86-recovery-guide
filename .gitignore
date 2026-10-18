@@ -1,0 +1,11 @@
+private/
+reports/
+work/
+*.img
+*.iso
+*.qcow2
+*.zip
+*.rar
+*.cpio.gz
+__pycache__/
+.DS_Store

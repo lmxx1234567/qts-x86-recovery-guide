@@ -1,0 +1,22 @@
+#!/bin/sh
+# Diagnostic replacement for /sbin/init: no normal QTS init and no auto-reboot.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+/bin/busybox mkdir -p /proc /sys /dev
+/bin/busybox mount -t proc proc /proc
+/bin/busybox mount -t sysfs sysfs /sys
+/bin/busybox mount -t devtmpfs devtmpfs /dev
+exec </dev/console >/dev/console 2>&1
+/bin/busybox cp /qts-profile/model.conf /etc/model.conf
+/bin/busybox sleep 15
+kernel=$(/bin/busybox uname -r)
+/sbin/insmod /lib/modules/$kernel/hal_netlink.ko
+/bin/busybox sleep 10
+echo 'DIAGNOSTIC ONLY: normal storage startup is not executed'
+/sbin/hal_app --pd_sys_scan enc_sys_id=root
+for d in /sys/class/scsi_generic/sg*; do
+ [ -e "$d" ] || continue
+ /sbin/hal_app --pd_sys_getinfo enc_sys_id=root,pd_sys_id=${d##*/}
+done
+echo 'Review all errors and identities. Capture console externally. No automatic continuation.'
+while :; do /bin/busybox sleep 60; done

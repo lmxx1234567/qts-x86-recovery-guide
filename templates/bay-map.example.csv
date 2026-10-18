@@ -1,0 +1,9 @@
+physical_bay,private_serial,private_wwn,linux_block,linux_sg,controller_sysfs_path,controller_port,hal_slot,hal_return,evidence
+1,REPLACE_SERIAL,REPLACE_WWN,REPLACE_BLOCK,REPLACE_SG,REPLACE_PATH,REPLACE_PORT,1,UNVERIFIED,photo-and-query
+2,,,,,,,2,UNVERIFIED,
+3,,,,,,,3,UNVERIFIED,
+4,,,,,,,4,UNVERIFIED,
+5,,,,,,,5,UNVERIFIED,
+6,,,,,,,6,UNVERIFIED,
+7,,,,,,,7,UNVERIFIED,
+8,,,,,,,8,UNVERIFIED,

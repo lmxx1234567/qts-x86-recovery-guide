@@ -1,0 +1,12 @@
+# Illustrative stanza, merge into the base loader's actual config.
+# Firmware label and support UUID must be verified in the final image.
+menuentry 'QTS' --id qts-normal {
+    search --no-floppy --label QTS_BOOT_PART3 --set=root
+    search --no-floppy --fs-uuid REPLACE_SUPPORT_UUID --set=profile
+    linux /boot/bzImage root=/dev/ram0 rw console=tty0 raid=noautodetect
+    initrd /boot/initrd.boot ($profile)/profile.cpio.gz
+}
+# Add a separately tested diagnostic entry before exposing original disks.
+# Set the normal default only after physical validation:
+# set default=qts-normal
+# set timeout=3

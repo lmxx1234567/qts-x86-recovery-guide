@@ -1,0 +1,43 @@
+#!/bin/sh
+# TEMPLATE ONLY. NVMe namespace topology and exact geometry must be reviewed.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+BOOT_SERIAL='REPLACE_BOOT_SERIAL'
+BOOT_SECTORS='REPLACE_EXACT_512_BYTE_SECTOR_COUNT'
+DOM_SECTORS='REPLACE_DOM_SECTORS'
+# One line per partition: number start length, all in 512-byte sectors.
+PARTITIONS='REPLACE_PARTITION_TABLE'
+fail() { echo "QTS profile validation failed: $1" >/dev/console; while :; do /bin/busybox sleep 60; done; }
+case "$BOOT_SERIAL $BOOT_SECTORS $DOM_SECTORS $PARTITIONS" in *REPLACE_*) fail 'unconfigured template';; esac
+/bin/busybox mkdir -p /proc /sys /dev
+/bin/busybox mount -t proc proc /proc 2>/dev/null
+/bin/busybox mount -t sysfs sysfs /sys 2>/dev/null
+boot=
+for p in /sys/block/nvme*n*; do
+ [ -e "$p/size" ] || continue
+ n=${p##*/}; controller=${n%n*}
+ serial=$(/bin/busybox cat /sys/class/nvme/$controller/serial 2>/dev/null | /bin/busybox tr -d ' ')
+ if [ "$serial" = "$BOOT_SERIAL" ]; then
+  [ -z "$boot" ] || fail 'multiple matching namespaces'
+  boot=$n
+ fi
+done
+[ -n "$boot" ] || fail 'boot device missing'
+[ "$(/bin/busybox cat /sys/block/$boot/size)" = "$BOOT_SECTORS" ] || fail 'size mismatch'
+# Validate every geometry entry before creating any mapping.
+while read -r number start length; do
+ [ -n "$number" ] || continue
+ [ "$(/bin/busybox cat /sys/block/$boot/${boot}p$number/start)" = "$start" ] || fail 'partition start mismatch'
+ [ "$(/bin/busybox cat /sys/block/$boot/${boot}p$number/size)" = "$length" ] || fail 'partition length mismatch'
+done <<EOF
+$PARTITIONS
+EOF
+/sbin/dmsetup create dom --table "0 $DOM_SECTORS linear /dev/$boot 0" || fail 'DOM map'
+while read -r number start length; do
+ [ -n "$number" ] || continue
+ /sbin/dmsetup create dom$number --table "0 $length linear /dev/$boot $start" || fail 'partition map'
+done <<EOF
+$PARTITIONS
+EOF
+/bin/busybox cp /qts-profile/model.conf /etc/model.conf || fail 'model copy'
+exec /bin/busybox init
