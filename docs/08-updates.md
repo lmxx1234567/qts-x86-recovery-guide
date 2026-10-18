@@ -1,7 +1,7 @@
 # 8. Updates and rollback
 
 <!-- stage-navigation -->
-[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
+[← Previous: Hardware display and apps](07a-hardware-and-apps.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
 <!-- /stage-navigation -->
 
 **Unattended automatic updating is not established by this project.** The observed official manual upgrade path succeeded in a disposable VM. That result does not prove that future firmware preserves the loader, overlay, drivers, HAL interfaces or data format.
@@ -28,5 +28,5 @@ Future automation should implement the gate above, including explicit compatibil
 ---
 
 <!-- stage-navigation -->
-[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
+[← Previous: Hardware display and apps](07a-hardware-and-apps.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
 <!-- /stage-navigation -->

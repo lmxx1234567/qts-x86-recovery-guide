@@ -1,7 +1,7 @@
 # 7. Independent boot and data acceptance
 
 <!-- stage-navigation -->
-[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
+[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Hardware display and apps →](07a-hardware-and-apps.md)
 <!-- /stage-navigation -->
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
@@ -48,5 +48,5 @@ See the [full screenshot journal](screenshots.md) for context and translations.
 ---
 
 <!-- stage-navigation -->
-[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
+[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Hardware display and apps →](07a-hardware-and-apps.md)
 <!-- /stage-navigation -->
