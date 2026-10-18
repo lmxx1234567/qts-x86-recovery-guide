@@ -1,6 +1,18 @@
 # Screenshot journal
 
-All images are original captures with irreversible solid-color redactions. Original private files are not included. Each English reading-guide image adds a clearly separated translated/explanatory caption; it is not a recreated English QTS interface. Console text is already predominantly English. Historical failures are labeled, not presented as final success.
+Images are original captures with private identifiers excluded by cropping or irreversible solid-color redactions. Original private files are not included. Each English reading-guide image adds a clearly separated translated/explanatory caption; it is not a recreated English QTS interface. Console text is already predominantly English. Historical failures are labeled, not presented as final success.
+
+## Native English UI follow-up — 2026-10-18
+
+These new captures were made after selecting English in QTS, then restoring the operator's previous language. They are actual English UI, not translated overlays. Each crop excludes account, address, hostname and device serial fields. No hardware values were edited. Raw private screenshots are not included.
+
+- [Hardware status](../assets/screenshots/hardware-status-native-en.jpg): Ryzen 5800X, 64 GB, four memory slots, CPU and eight SATA temperatures. Board temperature remains unsupported.
+- [Eight disks](../assets/screenshots/eight-disks-native-en.jpg): all eight disks enumerated. Free does not mean safe to erase; the unrelated disks retain data.
+- [Eight-bay front preview](../assets/screenshots/eight-bay-preview-native-en.jpg): eight large bays, with slot 8 selected. The crop omits identity fields above and below.
+- [Cache candidates](../assets/screenshots/cache-candidates-native-en.jpg): list scrolled to show SSDs 6/7, zero selected; wizard cancelled without creating cache.
+- [Qtier](../assets/screenshots/qtier-native-en.jpg): both tiers present, Idle / Automatic data tiering. This is a later live capture, not a new reboot or migration benchmark.
+
+The [follow-up changes](07a-hardware-and-apps.md) were saved to the overlay but have not yet been reboot-tested. The historical journal below keeps its original milestone meanings.
 
 Chinese UI glossary: 存储池 = Storage Pool; 空闲 = Idle; 自动数据分层 = Automatic Data Tiering; 超高速 = Ultra-high-speed tier; 容量 = Capacity tier; 已用 = Used; 总计 = Total; 下移/上移 = Move down/up; RAID 组 = RAID Group.
 

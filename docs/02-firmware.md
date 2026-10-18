@@ -1,5 +1,9 @@
 # 2. Firmware, loader and dependencies
 
+<!-- stage-navigation -->
+[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+<!-- /stage-navigation -->
+
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
 
@@ -27,3 +31,9 @@ A QNAP firmware `.img` inside a download ZIP is an **update package**, not a raw
 6. A bootable maintenance ISO and a way to deliver the locally built payload.
 
 The original two firmware slots were p2/p3, support was p7, and EFI was p1. These numbers belong to that base image. Inspect yours; do not invent partitions or expand its GPT to use the SSD tail during recovery.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+<!-- /stage-navigation -->

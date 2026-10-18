@@ -1,5 +1,9 @@
 # 3. Validate using disposable virtual disks
 
+<!-- stage-navigation -->
+[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
+<!-- /stage-navigation -->
+
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
 
@@ -30,3 +34,9 @@ The EFI directory acquired additional official files. Existing EFI executable an
 - Using a bounded device-mapper view did not by itself remove the underlying NVMe from the installer. Verify the actual installer disk list.
 - Treating the remaining SSD tail as a FLASH data device failed to produce a usable data disk. The final design uses a separate data pool.
 - An initial update failed with FW004 because staging under `/mnt/HDA_ROOT` ran out of space. Retrying on a real data volume with sufficient space succeeded. FW004 can have other causes; inspect logs.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
+<!-- /stage-navigation -->

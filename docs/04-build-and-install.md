@@ -1,5 +1,9 @@
 # 4. Build a boot SSD and use virtual CD
 
+<!-- stage-navigation -->
+[← Previous: VM validation](03-vm-validation.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Map every bay →](05-bay-mapping.md)
+<!-- /stage-navigation -->
+
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
 
@@ -70,3 +74,9 @@ After writing, verify the image-length readback hash and partition table. Mount 
 ![Boot SSD write/readback milestone](../assets/screenshots/980-write-verified-en.png)
 
 See the [full screenshot journal](screenshots.md) for context and translations.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: VM validation](03-vm-validation.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Map every bay →](05-bay-mapping.md)
+<!-- /stage-navigation -->

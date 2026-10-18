@@ -1,5 +1,9 @@
 # 1. Inventory, copies and recovery baseline
 
+<!-- stage-navigation -->
+[← Previous: Scope and decisions](00-scope.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Firmware and loader →](02-firmware.md)
+<!-- /stage-navigation -->
+
 ## Before removing disks from the source
 
 If the source is usable, export configuration, record QTS version/build and model, photograph bay labels, and save storage screenshots showing RAID groups, pool, volumes, Qtier tiers, encryption and any SSD cache. Export encryption keys and verify passwords locally. Note management ports, static IPs, VLANs, bonding, MTU, users, ACLs, shares and application dependencies.
@@ -37,3 +41,9 @@ Make consistent full-disk clones/images with a tool suited to device health. GNU
 A GPT backup or copies of the first few GiB are **not a data backup**. A prior experiment preserved metadata regions, but these were not full clones and can become stale after tier movement. They do not justify a general rollback promise.
 
 If the old system is readable, hash representative files before shutdown. Use the same relative paths after recovery and compare size and SHA-256. Read large files and examples from every volume; check ACLs and application-specific data separately. A hash first computed after migration proves readability, not unchanged data.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Scope and decisions](00-scope.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Firmware and loader →](02-firmware.md)
+<!-- /stage-navigation -->

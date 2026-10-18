@@ -35,4 +35,12 @@ Recorded 2026-10-17–18. Identifying information is removed. This is one measur
 
 No pre-switch hash baseline existed for the sampled real files, so unchanged data is not proven by those reads. No full surface/data-integrity audit or physical post-migration tier-promotion benchmark was performed. A previous independent virtual Qtier experiment must not be conflated with this physical recovery.
 
-No manual QTS formatting/configuration targeted the unrelated ZFS disks. An intermediate normal boot into the previous OS could have auto-imported them, so we do not claim zero disk writes. Physical unattended reboot and VM cold starts are distinct results. Future upgrades, other controllers, fan/temperature integration and the boot SSD tail as data storage remain unverified.
+No manual QTS formatting/configuration targeted the unrelated ZFS disks. An intermediate normal boot into the previous OS could have auto-imported them, so we do not claim zero disk writes. Physical unattended reboot and VM cold starts are distinct results. Future upgrades, other controllers, motherboard/fan integration and the boot SSD tail as data storage remain unverified. CPU and SATA disk temperature display was subsequently verified as described below.
+
+## Later hardware and app follow-up (2026-10-18)
+
+The [follow-up procedure](07a-hardware-and-apps.md) repaired CPU temperature display, the 64 GiB/four-slot memory report, the front eight-large-bay preview, and the slot 1–8 SSD-cache eligibility bitmap. QTS displayed both 32 GiB ECC UDIMMs and all eight disk temperatures. Board temperature remained Not Supported; DIMM manufacturer remained Unknown in QTS. No cache was created.
+
+A read-only app audit found 18 unregistered directories (10.25 GiB), with 1.44 GiB of ARM64 ELF files. App data and binaries were retained; container-layer ARM64 content was tracked separately. This establishes leftover candidates, not that every directory was a previously enabled app.
+
+The revised overlay was saved with a rollback copy and readback hash check. The artwork helper passed a live test, and md1/md2 remained complete. **No reboot was performed after these hardware changes.** New English-UI screenshots are live follow-up evidence, not replacement evidence for the earlier boot test.

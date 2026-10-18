@@ -1,5 +1,9 @@
 # 7. Independent boot and data acceptance
 
+<!-- stage-navigation -->
+[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
+<!-- /stage-navigation -->
+
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
 
@@ -31,8 +35,18 @@ Use the [acceptance checklist](../templates/acceptance.md). At minimum record:
 
 A GUI saying Ready does not validate every file. A few sample hashes do not validate an entire filesystem. In our case sample full-file reads succeeded, but there was no recorded pre-switch hash baseline for those files.
 
+## Hardware and app acceptance
+
+Continue with [hardware presentation and cross-architecture apps](07a-hardware-and-apps.md). Verify CPU/disk temperatures, real DIMM topology, front-preview highlights and cache eligibility separately from storage recovery. Record live verification and post-change reboot verification as distinct results. A missing App Center entry is not proof that its data has disappeared.
+
 ## Screenshot evidence
 
 ![Qtier after unattended reboot](../assets/screenshots/qtier-after-default-reboot-en.png)
 
 See the [full screenshot journal](screenshots.md) for context and translations.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
+<!-- /stage-navigation -->

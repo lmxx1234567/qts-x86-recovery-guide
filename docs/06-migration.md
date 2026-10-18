@@ -1,5 +1,9 @@
 # 6. Recover the original QNAP disk set
 
+<!-- stage-navigation -->
+[← Previous: Map every bay](05-bay-mapping.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Independent boot and acceptance →](07-acceptance.md)
+<!-- /stage-navigation -->
+
 ## Choose the right branch
 
 QNAP distinguishes an uninitialized destination receiving a complete old system disk set from an already initialized destination attaching another pool. The latter may use **Storage & Snapshots → Disks/VJBOD → Recover → Attach and Recover Storage Pool** (menu grouping varies by version). See [QNAP's migration FAQ](https://www.qnap.com/en-ca/how-to/faq/article/what-should-i-do-if-migrated-disks-are-not-shown-as-storage-pool-qnap-nas).
@@ -23,6 +27,10 @@ The recovered case showed two SSDs in RAID1 and three HDDs in RAID5, with no deg
 
 Read directories, then actual files from every volume. Compare pre-migration hashes where available. Validate shares, users, ACLs, extended attributes, encrypted content and application data separately. Export the important data to an independent destination before experimenting with updates or tuning.
 
+## Cross-architecture application follow-up
+
+Restored storage and app data do not prove every QPKG can run on the destination CPU. The ARM64-to-x86 case retained unregistered app directories. See the [read-only application audit](07a-hardware-and-apps.md#arm64-apps-preserve-data-inventory-before-cleanup) for registration comparison, ELF size accounting and preservation before any reinstall or cleanup.
+
 ## What to avoid
 
 Do not recreate a pool with the old disks, treat a missing SSD tier as optional cache, force generic LVM activation, restore stale VG metadata over a live pool, or run repair commands just because a UI is slow. A RAID UUID match alone does not establish a consistent Qtier transaction state.
@@ -34,3 +42,9 @@ Our unrelated bays 6–8 were never selected for QTS initialization or pool conf
 ![Recovered Qtier pool](../assets/screenshots/qtier-restored-verified-en.png)
 
 See the [full screenshot journal](screenshots.md) for context and translations.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Map every bay](05-bay-mapping.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Independent boot and acceptance →](07-acceptance.md)
+<!-- /stage-navigation -->

@@ -1,5 +1,9 @@
 # 5. Map every physical bay
 
+<!-- stage-navigation -->
+[← Previous: Build and install](04-build-and-install.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Recover the disk set →](06-migration.md)
+<!-- /stage-navigation -->
+
 A working Linux driver and a successful QTS scan are necessary but insufficient. QTS HAL must resolve the same physical disk to the intended enclosure/slot in the reverse query too.
 
 ## Collect three views
@@ -69,7 +73,7 @@ Temperature, fan, activity LEDs and hot-swap behavior require their own tests. S
 
 ## Complete observed profile and final mapping
 
-[Complete case model.conf](../templates/case-x570-model.conf) preserves the working configuration structure without private identifiers. Its CAP/network/memory/sensor settings are specific to that profile and do not certify those features. The general template remains intentionally incomplete.
+[Complete case model.conf](../templates/case-x570-model.conf) preserves the working configuration structure without private identifiers. It includes the later live-verified CPU, DIMM and cache-port corrections; its CAP/network settings still do not certify those features. The revised overlay has not yet been reboot-tested. The general template remains intentionally incomplete.
 
 This table is transcribed from the final verified mapping record, not the earlier failed-scan screenshot:
 
@@ -91,3 +95,13 @@ The 4/5 physical-label inference noted above still applies. The sg names describ
 ![Historical scan-only milestone: reverse lookup still failed](../assets/screenshots/eight-bay-hal-verified-en.png)
 
 See the [full screenshot journal](screenshots.md) for context and translations.
+
+## Follow-up: artwork and cache eligibility
+
+Correct HAL mapping did not fix the six-plus-two TS-877 drawing or the zero cache-port bitmap. See [eight-large-bay artwork](07a-hardware-and-apps.md#eight-large-bays-artwork-is-separate-from-disk-mapping) and [slot-based cache eligibility](07a-hardware-and-apps.md#ssd-cache-candidates-a-slot-capability-bitmap) for the separate verified fixes. Neither changes disk identity or authorizes reuse of a disk containing data.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Build and install](04-build-and-install.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Recover the disk set →](06-migration.md)
+<!-- /stage-navigation -->

@@ -1,5 +1,9 @@
 # 8. Updates and rollback
 
+<!-- stage-navigation -->
+[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
+<!-- /stage-navigation -->
+
 **Unattended automatic updating is not established by this project.** The observed official manual upgrade path succeeded in a disposable VM. That result does not prove that future firmware preserves the loader, overlay, drivers, HAL interfaces or data format.
 
 Keep update notifications distinct from automatic installation. For recovery use, defer upgrades until data has been exported or backed up. For continued operation, evaluate security releases promptly through a staged workflow rather than leaving the machine indefinitely unpatched.
@@ -10,7 +14,7 @@ Keep update notifications distinct from automatic installation. For recovery use
 2. Compare kernel/modules, init scripts, HAL libraries, EFI/GRUB and partition/updater logic against the tested version.
 3. Back up the full boot SSD and configuration; make a consistent test copy/snapshot of the data disks. A boot backup alone cannot undo storage metadata changes.
 4. Test the official update on an isolated copy. Keep official signature/version checks enabled and stage the package where space is sufficient.
-5. Verify all bays, boot exclusion from data choices, both cold boots, pool/tier state and file hashes.
+5. Verify all bays, boot exclusion from data choices, both cold boots, pool/tier state and file hashes. Repeat the [hardware follow-up checks](07a-hardware-and-apps.md): native CPU temperature source, DIMM topology, cache-port mask and late-loaded web artwork. Re-derive DMI handle offsets after BIOS changes.
 6. With a recovery route ready, schedule the production update and repeat acceptance. Keep the console available.
 
 ## Why two firmware slots are not rollback
@@ -20,3 +24,9 @@ The tested update rewrote p2 and p3 with the new firmware. They were not an old/
 A safe rollback may require both boot and storage state from a consistent point, and an older firmware may not understand newer metadata. Do not downgrade against a live migrated pool merely because an older boot image exists. Recover important files first.
 
 Future automation should implement the gate above, including explicit compatibility evidence and a failure stop. A timer that downloads the newest package and reboots is not a validated recovery/update system.
+
+---
+
+<!-- stage-navigation -->
+[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Back to project overview →](../README.md)
+<!-- /stage-navigation -->

@@ -25,5 +25,18 @@ Clone or backup location and consistency point:
 - [ ] Physical unattended reboot passes
 - [ ] Physical power-off/start passes (separate from reboot)
 
+## Post-recovery hardware and apps (separate from storage acceptance)
+
+- [ ] CPU temperature agrees with a real kernel/HAL source
+- [ ] Every supported disk temperature is visible
+- [ ] Unsupported motherboard/fan sensors explicitly recorded; independent cooling retained
+- [ ] Total memory and populated/empty DIMM topology agree with SMBIOS
+- [ ] Front preview and selected-slot highlights agree with the HAL map
+- [ ] Cacheable slot bitmap checked without selecting or initializing data disks
+- [ ] App registration compared with retained directories; architecture and scan errors recorded
+- [ ] App data preserved before any compatible-package restore test
+- [ ] Revised overlay backed up, installed on verified boot device and read back
+- [ ] All hardware follow-up checks repeated after an authorized reboot
+
 Warnings / unresolved items:
 Evidence filenames (private):
