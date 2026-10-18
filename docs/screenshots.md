@@ -2,7 +2,7 @@
 
 Installation, troubleshooting and recovery milestones. Each caption identifies the stage and what the result establishes.
 
-## Native English UI follow-up — 2026-10-18
+## Hardware and storage follow-up — 2026-10-18
 
 Hardware and storage status after the follow-up fixes:
 
@@ -10,7 +10,7 @@ Hardware and storage status after the follow-up fixes:
 - [Eight disks](../assets/screenshots/eight-disks-native-en.jpg): all eight disks enumerated. Free does not mean safe to erase; the unrelated disks retain data.
 - [Eight-bay front preview](../assets/screenshots/eight-bay-preview-native-en.jpg): eight large bays, with slot 8 selected.
 - [Cache candidates](../assets/screenshots/cache-candidates-native-en.jpg): list scrolled to show SSDs 6/7, zero selected; wizard cancelled without creating cache.
-- [Qtier](../assets/screenshots/qtier-native-en.jpg): both tiers present, Idle / Automatic data tiering. This is a later live capture, not a new reboot or migration benchmark.
+- [Qtier](../assets/screenshots/qtier-native-en.jpg): both tiers present, Idle / Automatic data tiering. No additional reboot or migration benchmark was performed for this follow-up.
 
 The [follow-up changes](07a-hardware-and-apps.md) were saved to the overlay but have not yet been reboot-tested. The historical journal below keeps its original milestone meanings.
 

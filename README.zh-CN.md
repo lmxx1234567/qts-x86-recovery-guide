@@ -14,6 +14,6 @@
 
 **Ryzen 7 5800X（8 核 16 线程）· 64 GiB ECC · 八个 SATA 盘位 · 原 Qtier 池恢复**。主板为 ASRock Rack X570D4U-2L2T，内存为两条 32 GiB、3200 MT/s；独立 Samsung 980 NVMe 负责引导，原两块 4 TB SSD RAID1 + 三块 8 TB HDD RAID5 组成恢复后的 Qtier 池。
 
-![实机英文界面：CPU、64 GB 内存、四个插槽和温度](assets/screenshots/hardware-status-native-en.jpg)
+![CPU、64 GB 内存、四个插槽和温度](assets/screenshots/hardware-status-native-en.jpg)
 
 已修正 CPU 温度、内存拓扑、八大盘位预览和全部八个盘位的缓存资格；没有创建缓存，也没有删除 ARM64 旧应用。主板温度尚未接入 QTS。新增修正已在线验证并保存到启动覆盖包，但尚未重启复验。详见[硬件显示与应用迁移](docs/07a-hardware-and-apps.md)。

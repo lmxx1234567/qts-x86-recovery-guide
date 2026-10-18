@@ -36,7 +36,7 @@ All eight SATA disks already supplied temperature information; the hardware page
 
 **System temperature still reads Not Supported.** This QTS kernel did not expose a usable motherboard sensor/IPMI interface; only k10temp appeared under hwmon. The board's BMC did show motherboard temperatures and fan speeds separately. That does not mean Linux can never read them, or that the sensors are absent. BMC collection and QTS integration were deferred. Keep firmware/BMC fan management in place; do not substitute CPU temperature for motherboard temperature or invent readings.
 
-![Native English QTS hardware page: CPU, 64 GB memory, four DIMM slots and eight disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
+![CPU, 64 GB memory, four DIMM slots and eight disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
 
 ## Memory: 0 B in QTS while Linux sees 64 GB
 
@@ -75,7 +75,7 @@ Under `/home/httpd/v3_menu/layout/`, the local replacements were:
 
 Back up the actual target files and inspect any `model_0.svg` symlink first. Check that the front SVG contains the expected `hd_0` through `hd_7` elements and verify every populated slot's highlight against the already-accepted HAL map. Slots 7 and 8 were explicitly checked here. The device remains a TS-877 profile; only front/static artwork changed, not rear views, SATA mapping or physical chassis identity.
 
-![All eight disks in the native English storage page](../assets/screenshots/eight-disks-native-en.jpg)
+![All eight disks in Storage & Snapshots](../assets/screenshots/eight-disks-native-en.jpg)
 
 ![Eight-bay front preview and selected disk details](../assets/screenshots/eight-bay-preview-native-en.jpg)
 
@@ -94,7 +94,7 @@ SYSTEM_DISK_CACHEABLE_BITMAP = 0x1FE
 
 The wizard then listed disks again: the pool members were In Use, and the Intel SSDs in slots 6 and 7 appeared as candidates. HDD rows may also be listed; that does not make an HDD eligible for SSD caching. The bitmap only removes a port restriction—disk type, health and existing allocation still matter. No disk was selected and the wizard was cancelled. **Cache operation, performance and data safety were not tested.** Qtier's SSD tier remains real pool storage, separate from this feature.
 
-![Native English cache wizard with zero disks selected](../assets/screenshots/cache-candidates-native-en.jpg)
+![SSD-cache wizard with zero disks selected](../assets/screenshots/cache-candidates-native-en.jpg)
 
 ## ARM64 apps: preserve data, inventory before cleanup
 

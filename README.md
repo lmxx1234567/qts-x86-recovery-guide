@@ -22,7 +22,7 @@ The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the origin
 | Dedicated boot | Samsung 980 500 GB NVMe |
 | Monitoring | CPU temperature and all eight SATA disk temperatures visible in QTS |
 
-![Actual English QTS UI showing Ryzen 5800X, 64 GB ECC memory and live temperatures](assets/screenshots/hardware-status-native-en.jpg)
+![Ryzen 5800X, 64 GB ECC memory and temperatures](assets/screenshots/hardware-status-native-en.jpg)
 
 *Motherboard temperature remains Not Supported; the DIMM manufacturer label remains Unknown. Hardware-display and cache-candidate fixes are live-verified and saved in the boot overlay, but their post-change reboot test is still pending. See [hardware and app follow-up](docs/07a-hardware-and-apps.md).*
 
@@ -75,9 +75,9 @@ Run the offline tool tests with Python 3.9+: `python3 -m unittest discover -s te
 
 ## Recovered Qtier pool
 
-![Recovered Qtier pool in the actual English QTS UI](assets/screenshots/qtier-native-en.jpg)
+![Recovered Qtier pool](assets/screenshots/qtier-native-en.jpg)
 
-Current English-UI capture after the hardware follow-up: SSD RAID1 and HDD RAID5 tiers remain present. The [earlier unattended-reboot evidence](docs/screenshots.md#qtier-after-default-reboot) is retained separately; this new capture is not a new reboot test.
+The SSD RAID1 and HDD RAID5 tiers remain present after the hardware follow-up. See the [unattended-reboot results](docs/screenshots.md#qtier-after-default-reboot) for boot validation; no additional reboot was performed after the hardware changes.
 
 ## What this does not promise
 

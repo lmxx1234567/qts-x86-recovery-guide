@@ -43,4 +43,4 @@ The [follow-up procedure](07a-hardware-and-apps.md) repaired CPU temperature dis
 
 A read-only app audit found 18 unregistered directories (10.25 GiB), with 1.44 GiB of ARM64 ELF files. App data and binaries were retained; container-layer ARM64 content was tracked separately. This establishes leftover candidates, not that every directory was a previously enabled app.
 
-The revised overlay was saved with a rollback copy and readback hash check. The artwork helper passed a live test, and md1/md2 remained complete. **No reboot was performed after these hardware changes.** New English-UI screenshots are live follow-up evidence, not replacement evidence for the earlier boot test.
+The revised overlay was saved with a rollback copy and readback hash check. The artwork helper passed a live test, and md1/md2 remained complete. **No reboot was performed after these hardware changes.** These follow-up checks do not replace post-change boot validation.
