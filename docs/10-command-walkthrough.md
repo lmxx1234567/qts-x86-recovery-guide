@@ -4,6 +4,12 @@ This fills the operational gaps between the conceptual chapters. Run it in order
 
 The complete example is the observed X77 DOM layout. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. This command transcription and the new image helper have offline tests; the whole sequence has **not** been freshly rerun on physical hardware. The earlier installation/VM results are described separately in the case study.
 
+## How to use this walkthrough
+
+Read the stage guide for decisions and return here for the corresponding commands. Sections 1–6 build/test the disposable VM; sections 7–8 create/write a separate physical candidate; sections 9–10 validate recovery and permanent boot. Do not rerun creation commands over a saved VM or reuse an output directory after a failed build. Preserve it for diagnosis and start a fresh directory.
+
+Offline checks cover helper behavior, local links and shell syntax. The retained firmware extraction was compared byte-for-byte with the case payload, and the original base image was inspected without modification. These checks do not execute QTS, establish driver compatibility or validate a new machine's storage. The standalone command transcription has not been freshly rerun end-to-end on hardware; follow each runtime gate in chapters 3–7.
+
 ## 1. Build machine and directory layout
 
 Use Bash on a disposable Debian/Ubuntu x86-64 Linux VM with at least 20 GiB free space for build files; the separate QTS test VM needs additional space. A Mac can host this Linux VM, but do not run Linux device commands against macOS disks. Build dependencies are installed on the build VM, not on the recovering NAS:

@@ -17,24 +17,27 @@ Keep update notifications distinct from automatic installation. For recovery use
 5. Verify all bays, boot exclusion from data choices, both cold boots, pool/tier state and file hashes. Repeat the [hardware follow-up checks](07a-hardware-and-apps.md): native CPU temperature source, DIMM topology, cache-port mask and late-loaded web artwork. Re-derive DMI handle offsets after BIOS changes.
 6. With a recovery route ready, schedule the production update and repeat acceptance. Keep the console available.
 
-## Existing modification audit
+## Perform the manual update on the test copy
 
-A read-only review of the live host, its boot-overlay sources and local update evidence on **2026-10-18** found the following. “Stored in the overlay” means it can be reapplied if that overlay still loads; it does not mean the modification remains compatible with a new firmware. No update setting was changed during the initial audit. **This table records the pre-unification state.** The later [unified package](07a-hardware-and-apps.md#unified-one-shot-restoration-package) adds independent recovery/notifications for sensors, the CPU widget, memory, cache eligibility, artwork and MyQNAP metadata; boot-path and privilege-policy boundaries still apply.
+Start with a stopped, consistent checkpoint of the test VM's boot disk, data disks and UEFI variables. Record the current version, healthy storage state and test-file hash. An already degraded or rebuilding pool is not an appropriate update experiment.
 
-| Modification | Persistence mechanism | Update failure mode / existing protection |
-|---|---|---|
-| Dedicated NVMe boot, bounded DOM mappings and unrelated-OS NVMe exclusion | EFI/GRUB loads the custom overlay; its early init checks device identity/geometry, creates DOM mappings and detaches the designated unrelated controller | **Highest consequence.** A replaced boot menu, omitted overlay, changed kernel/tool support or changed device topology can break boot or bypass intended isolation. The sensor checker cannot protect this earlier stage. Guarded init stops on its checked mismatches, but cannot enforce anything if it is never loaded. |
-| Eight-bay SATA mapping | Full hardware-specific model copied by early init | Overlay survival restores the file, but changed PCI paths, HAL interpretation or model support can invalidate it. No automatic bay-by-bay acceptance or repair exists. |
-| DIMM channels/slots and DMI offsets | `[System Memory]` in the overlay model | Depends on HAL's DMI decoder and SMBIOS handle offsets. Firmware may change decoding/cache behavior; BIOS changes may change offsets. No automatic compatibility gate or targeted DIMM-cache cleanup is installed. |
-| SSD-cache candidate bitmap | `SYSTEM_DISK_CACHEABLE_BITMAP` in the overlay model, interpreted into HAL state | A new HAL may change/ignore the mask or cache stale values. Recheck candidates, but do not create a cache as a diagnostic. No automatic compatibility check exists. |
-| Eight-large-bay artwork | Bounded startup helper copies three locally extracted SVGs after target paths appear | It checks **existence only**, not version, SVG structure or slot-ID semantics. Renamed paths cause timeout; reused paths with changed semantics could receive stale artwork. Only a temporary status file records the result; no QTS warning is implemented for this helper. |
-| CPU/motherboard/fan integration and CPU dashboard row | New one-shot sensor check in the boot overlay | Compatible losses can be restored; unknown dependencies/layouts stop with a QTS warning. A removed overlay/hook prevents both repair and notification. Not upgrade/reboot-tested. |
-| MyQNAP local metadata-cache workaround | Refresh/validation scripts in a private volume directory, a six-hour cron entry, local XML under `/etc/config/rssdoc`, and a third-party repository entry pointing to that XML | Script files can survive while the cron entry, repository registration, local web route, Python/curl dependency or metadata schema changes. Refresh preserves the last valid index on failure, so stale results may hide a broken refresh. No independent restart/upgrade self-check or QTS failure notification was found in this task. This is an index workaround, not proof of third-party package safety or compatibility. |
-| Passwordless sudo customization | Runtime include directory `/usr/etc/sudoers.d` | Not present in the audited boot overlay. On this RAM-root installation it has no demonstrated reboot/update persistence. A replacement sudo configuration or reset runtime root may remove it. Keep an alternate administrator access route; do not silently recreate privilege rules as a sensor repair. |
+1. Download the exact target model/build ZIP to the computer running the browser. Extract the official update `.img` from the ZIP. For this UI operation use that update package, **not** the PC1-extracted kernel files and not `qts-boot.img`.
+2. In QTS, open **Control Panel → System → Firmware Update → Manual Installation**. Choose Browse, select the extracted update package, verify the displayed version, then start Update System. This is the [official manual update workflow](https://docs.qnap.com/operating-system/qts/5.2.x/en-us/updating-the-firmware-manually-F347B63B.html); follow any version-specific prerequisites instead of bypassing them.
+3. Keep the console available and allow installation and its requested restart to complete. If validation fails, retain the error/log and stop. Do not disable signature checks, delete system files to make room or force a restart during firmware writing. Check space on the actual staging volume; the earlier FW004 space failure does not mean every FW004 has that cause.
+4. Log in again and read the actual runtime version/build. A successful upload or a changed download filename is not evidence that the update booted. Run chapter 3's two cold starts and file/hash checks; compare geometry, EFI and support-file manifests against the checkpoint using readback on **stopped disk-image copies**.
+5. If a gate fails, keep the failed VM state for analysis and restore all checkpoint components together. Do not use a boot-only rollback against newer data metadata. Promote the procedure to production only after the intended update path has passed and independent data backups are available.
 
-The full model is copied as a unit by the existing early-init design. Consequently, the new sensor compatibility check does **not** protect the earlier disk, memory, cache or artwork adaptations, even when it reports success. Changes to these components need their own acceptance evidence, not just a working dashboard.
+For recovery work, keep native firmware installation notification-only in the firmware-update settings and read the saved selection back. Checking for updates and delivering email/push notifications are separate settings. The restoration package discussed below restores some local adaptations; it does not make an untested firmware update safe or automatically reversible.
 
-### Current automatic-update setting
+## Adaptation compatibility is separate from firmware installation
+
+The [one-shot restoration package](07a-hardware-and-apps.md#unified-one-shot-restoration-package) and its component checks are documented with the hardware/app procedures. It is not an updater or a full rollback system. Keep three boundaries explicit:
+
+- EFI/GRUB, early-init device mapping and all bay identities must work before optional repairs can run. If the overlay or startup hook is lost, its repair scripts and notifications cannot protect the boot path.
+- A surviving overlay can reapply a file without proving it remains compatible. Recheck actual HAL behavior, DIMM topology, sensor readings and application access after the update. A working CPU widget is not storage acceptance.
+- Package rollback covers its own changes, not QTS firmware or pool metadata. Administrative privilege customizations need separate deliberate management; do not recreate passwordless sudo as part of a display repair.
+
+## Case policy: notification-only
 
 The initial 2026-10-18 audit found `v3_action_mode = 2` (`UPDATE_LATEST`) and native update schedules, contrary to an older local research policy. After the operator explicitly requested a change, the QTS firmware-update page was used to select **“Notify me, but do not automatically update firmware.”** Configuration readback confirmed `v3_action_mode = 1` and legacy `action_mode = 2`. No firmware installer/reboot process was running when checked. Arrays remained complete, with the existing resync continuing.
 
@@ -42,18 +45,11 @@ The configured notification/check time remains daily at 04:00. The UI reports th
 
 ![Firmware settings: notify only, daily check at 04:00, and a warning that delivery rules are not configured](../assets/screenshots/firmware-notify-only.png)
 
-The actual settings-page capture from 2026-10-18 shows **“通知我，但不自动更新”** (notify me, but do not automatically update). The explanatory text says updates will not install automatically. The warning below it concerns missing notification-delivery rules; it is not permission to install firmware. The crop excludes the desktop account, address bar and unrelated notifications. It records the saved policy, not an upgrade or reboot test.
-
-### Priorities before the next update
-
-1. Verify the actual update mode and retain a tested recovery route and consistent backups. The original storage safeguards remain the highest priority.
-2. Stage the exact target firmware and verify overlay loading, boot-device exclusion, unrelated-OS isolation and all eight bay mappings before accepting production operation.
-3. Recheck DIMM topology/cache candidates. Give artwork and metadata-cache helpers explicit compatibility checks and failure reporting before relying on them unattended; this audit did not add those protections.
-4. Verify `[Sensor Repair]` status and real readings, then check applications and administrative access separately. Do not automatically restore sudo privilege changes.
+The actual settings-page capture from 2026-10-18 shows **“通知我，但不自动更新”** (notify me, but do not automatically update). The explanatory text says updates will not install automatically. The warning below it concerns missing notification-delivery rules; it is not permission to install firmware. It records the saved policy, not an upgrade or reboot test.
 
 ## Proposed support for routine updates
 
-**Restoration package implemented and installed; automatic firmware installation not deployed.** The goal is ordinary stable TS-X77 / QTS 5.2 maintenance releases without an exact-build allowlist or a new manual review for every changed binary. Major QTS migrations, cross-model firmware changes and unusual hardware/boot-layout changes are outside this target. “Most routine updates” is an engineering goal, not a measured success rate. Native firmware installation remains notification-only until this design is implemented and exercised.
+**Restoration package implemented and installed; automatic firmware installation not deployed.** The goal is ordinary stable TS-X77 / QTS 5.2 maintenance releases without an exact-build allowlist or a new manual review for every changed binary. Major QTS migrations, cross-model firmware changes and unusual hardware/boot-layout changes are outside this target. “Most routine updates” is an engineering goal, not a measured success rate. Native firmware installation remains notification-only until the remaining update integration tests and installer workflow are completed.
 
 ### Keep one persistent adaptation package
 
