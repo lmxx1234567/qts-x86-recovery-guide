@@ -21,6 +21,29 @@ This repository contains original documentation and helper code. It does **not**
 
 A QNAP firmware `.img` inside a download ZIP is an **update package**, not a raw boot-disk image. Writing it directly to an SSD is not the procedure used here. Extraction in the experiment used the community qnap-recovery PC1 utility; see [sources](sources.md). Confirm the extractor handles integer widths correctly on your build platform and verify the extracted payload. Do not disable firmware signature checks to make an update appear successful.
 
+### Downloads used in this case
+
+These are the specific inputs used in the experiment, not a compatibility guarantee for other hardware or a recommendation to use an older release.
+
+| Input | Download | Contents and role |
+| --- | --- | --- |
+| Community DOM base | [`x77-dom.img.rar` (Google Drive)](https://drive.google.com/file/d/1g9cLcbQGZ8kRv7Cjorn_Ylc3mc8xrO2q/view) | Archive containing the raw `x77-dom.img` boot-disk image; the starting point for the custom boot layout. |
+| QTS 5.2.10.3577, build 20260731 | [Official TS-X77 ZIP](https://download.qnap.com/Storage/TS-X77/TS-X77_20260731-5.2.10.3577.zip) | Contains `TS-X77_20260731-5.2.10.3577.img`; used for the final installation and as the VM upgrade destination. |
+| QTS 5.1.6.2722, build 20240402 | [Official TS-X77 ZIP](https://download.qnap.com/Storage/TS-X77/TS-X77_20240402-5.1.6.2722.zip) | Contains `TS-X77_20240402-5.1.6.2722.img`; the earlier version used in the VM upgrade test. |
+
+The DOM archive was retrieved on 2026-10-17 from the [community distribution folder](https://drive.google.com/drive/folders/1lC-Gh0TF7ZxUy12YqoTg8nGEY7whfC6W), linked by the [source tutorial](https://blog.hx99.net/Tech/2015.html). Its extracted raw image was 3,942,645,760 bytes and dated 2022-06-10; the retrieval date is not its build date. See [sources and provenance](sources.md) for the extraction utility.
+
+For example, download and inspect the final official package with:
+
+```sh
+curl --fail --location --output TS-X77_20260731-5.2.10.3577.zip \
+  https://download.qnap.com/Storage/TS-X77/TS-X77_20260731-5.2.10.3577.zip
+unzip -l TS-X77_20260731-5.2.10.3577.zip
+unzip TS-X77_20260731-5.2.10.3577.zip -d firmware-5.2.10.3577
+```
+
+The resulting `.img` still needs the firmware extraction procedure in the [command walkthrough](10-command-walkthrough.md). It is **not** the raw DOM image to write to an SSD. Both official ZIP URLs returned HTTP 200 when checked on 2026-10-19; future availability and community download permissions may change.
+
 ## Build inputs
 
 1. An independently obtained bootable DOM/EFI base image with known partition geometry.
