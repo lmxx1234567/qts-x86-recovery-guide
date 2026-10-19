@@ -16,7 +16,7 @@ def read(p):
     with open(p,'rb') as f:return f.read()
 def txt(p):return read(p).decode('utf-8')
 def sha(b):return hashlib.sha256(b).hexdigest()
-def run(args,timeout=20):
+def run_result(args,timeout=20):
     # Temporary output avoids pipe deadlocks; isolated process groups bound probes.
     with tempfile.TemporaryFile() as out:
         p=subprocess.Popen(args,stdout=out,stderr=out,preexec_fn=os.setsid)
@@ -25,8 +25,72 @@ def run(args,timeout=20):
         if p.poll() is None:
             os.killpg(p.pid,signal.SIGKILL);p.wait();raise Skip('Command timed out: '+args[0])
         out.seek(0);data=out.read(4*1024*1024).decode('utf-8','replace')
-        need(p.returncode==0,'Command failed: '+args[0]+' (exit '+str(p.returncode)+')')
-        return data
+        return p.returncode,data
+
+def run(args,timeout=20):
+    rc,data=run_result(args,timeout)
+    need(rc==0,'Command failed: '+repr(args)+' (exit '+str(rc)+'): '+data[:1000])
+    return data
+
+
+# daemon_mgr can return 1 after changing state. Never treat that code alone as success.
+def process_ids(argv,proc='/proc'):
+    found=[]
+    for path in glob.glob(proc+'/[0-9]*/cmdline'):
+        try:
+            args=read(path).split(b'\0')
+            args=[a.decode('utf-8','replace') for a in args if a]
+            if args==argv:found.append(int(path.split('/')[-2]))
+        except (IOError,OSError):pass  # Process exited while scanning.
+    return found
+
+def monitor_state():
+    rows=[]
+    for line in txt('/etc/daemon_mgr.conf').splitlines():
+        if '=' not in line:continue
+        parts=[p.strip() for p in line.split('=',1)[1].split(',',2)]
+        if parts and parts[0]=='hal_daemon':rows.append(parts)
+    need(len(rows)==1 and len(rows[0])==3 and rows[0][2]=='/sbin/hal_daemon -f',
+         'Unknown/duplicate hardware monitor registration')
+    need(rows[0][1] in ('start','stop'),'Unknown hardware monitor action')
+    return rows[0][1],process_ids(['/sbin/hal_daemon','-f'])
+
+def monitor_matches(action):
+    registered,pids=monitor_state()
+    return registered==action and (len(pids)==1 if action=='start' else not pids)
+
+def monitor_action(action,timeout=20):
+    need(action in ('start','stop'),'Invalid monitor action')
+    monitor_state()  # Refuse unfamiliar registrations before any command.
+    args=['/sbin/daemon_mgr','hal_daemon',action,'/sbin/hal_daemon -f']
+    rc,data=run_result(args,timeout)
+    print(json.dumps({'monitor_action':action,'returncode':rc,'output':data[:1000]}));sys.stdout.flush()
+    # Only this bounded, explicitly verified daemon_mgr transition accepts exit 1.
+    need(rc in (0,1),'Monitor command failed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
+    end=time.time()+timeout
+    while True:
+        if monitor_matches(action):return
+        need(time.time()<end,'Monitor transition unconfirmed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
+        time.sleep(.25)
+
+def restart_monitor():
+    try:
+        if not monitor_matches('stop'):monitor_action('stop')
+    except Exception as original:
+        # A stop may have taken effect even when its command failed or timed out.
+        # Restore availability before reporting failure; do not suppress the original.
+        try:monitor_action('start')
+        except Exception as recovery:
+            raise Skip('Monitor stop failed: '+str(original)+'; recovery start failed: '+str(recovery))
+        raise
+    monitor_action('start')
+
+def startup_ready():
+    try:
+        return (not os.path.exists('/tmp/booting') and
+                os.path.isfile('/etc/hal.conf') and os.path.isfile('/tmp/em/em_0.info') and
+                len(process_ids(['/sbin/daemon_mgr']))==1 and monitor_matches('start'))
+    except (IOError,OSError,Skip):return False
 
 def sections(s):
     out={}
@@ -204,7 +268,7 @@ class Context(object):
         settings_changed=m.encode('utf-8')!=original[MODEL] or h.encode('utf-8')!=original[HAL]
         restarted=[False]
         def restart():
-            run(['/sbin/daemon_mgr','hal_daemon','stop','/sbin/hal_daemon -f']);run(['/sbin/daemon_mgr','hal_daemon','start','/sbin/hal_daemon -f'])
+            restart_monitor()
         def after(changed):
             if settings_changed and changed:
                 restarted[0]=True;restart();time.sleep(20)
@@ -313,6 +377,8 @@ class Context(object):
         return result
 
 def main():
+    if '--startup-ready' in sys.argv:return 0 if startup_ready() else 1
+    selected=['sensors'] if '--only-sensors' in sys.argv else MODULES
     need(os.geteuid()==0,'Root required');private_dir(STATE)
     lock=os.open(STATE+'/lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
     try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -321,17 +387,19 @@ def main():
         check='--check' in sys.argv;c=None;results={}
         try:
             profile=json.loads(txt(BASE+'/profile.json'));c=Context(profile,check);c.gate()
-        except Exception as e:results={n:{'state':'skipped','reason':str(e)} for n in MODULES}
+        except Exception as e:results={n:{'state':'skipped','reason':str(e)} for n in selected}
         else:
-            for n in MODULES:
+            for n in selected:
                 try:results[n]=getattr(c,n)()
                 except Exception as e:results[n]={'state':'skipped','reason':str(e)}
-        report={'package':'1.0','firmware':c.firmware if c else None,'check_only':check,'modules':results,'time':time.strftime('%Y-%m-%d %H:%M:%S')}
+        report={'package':'1.1','scope':selected,'firmware':c.firmware if c else None,'check_only':check,'modules':results,'time':time.strftime('%Y-%m-%d %H:%M:%S')}
         print(json.dumps(report,indent=2))
         if not check:
             old={}
             try:old=json.loads(txt(STATE+'/status.json'))
             except (IOError,ValueError):pass
+            if '--only-sensors' in sys.argv:
+                report['previous_modules']=old.get('modules',{})
             atomic(STATE+'/status.json',(json.dumps(report,indent=2)+'\n').encode('utf-8'),0o600)
             summary='; '.join(n+': '+r['state']+(' ('+r['reason'][:150]+')' if 'reason' in r else '') for n,r in sorted(results.items()))
             def signature(rs):return {n:(r['state']=='skipped',r.get('reason')) for n,r in rs.items()}

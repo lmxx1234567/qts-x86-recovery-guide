@@ -129,6 +129,18 @@ The builder writes a new regular archive and review report; it never mounts or w
 
 **Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#proposed-support-for-routine-updates).
 
+### Monitor recovery correction (2026-10-19)
+
+The first observed restart exposed a recovery bug: the unified package and its hook survived, but `daemon_mgr` returned 1 after a monitor transition. The generic zero-only command wrapper raised before the next start command; the same sequence in rollback left the manager registration at `stop` and no `hal_daemon` process. Sensor files were rolled back and the UI's CPU value was a stale cache. This startup failure does not identify the cause of the preceding orderly shutdown.
+
+The monitor-specific controller now accepts exit 0 or 1 **only after** both the exact manager registration and the actual process list confirm the requested state. Other commands retain strict zero-exit handling; unexpected codes, duplicate/unknown registrations and unconfirmed transitions fail. A failed or timed-out stop attempts a recovery start before reporting the original error. Transaction rollback restores files before recovering the monitor. Command/action, return code and output are retained in diagnostic output.
+
+Startup waits for the native boot marker to clear, the manager and monitor to be running, and prerequisites to exist; it rechecks after a 30-second settling interval. It reopens its output log after native initialization so an early `/tmp` mount cannot hide the log. A bounded timeout still skips restoration. `--only-sensors` scopes an explicitly reviewed live repair without running the other modules. Preserve the failed marker and logs before an authorized retry; do not blindly clear blocked modules.
+
+Validation: **46 tests passed**, including confirmed/non-confirmed exit 1, exit 0 without a state change, unexpected exit codes, stop timeout/start recovery, rollback order, duplicate registration, exact process identity, startup readiness and archive preservation. On the case host, the live sensor-only repair restored the monitor, verified cache timestamps advancing over 20 seconds, and matched HAL motherboard/fan values to BMC readings. A sensor-only preflight then checked the installed mapping. These samples are not an ECO-mode power benchmark.
+
+[patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) updates only `qts-profile/mods/reconcile.py` and `qts-profile/mods/start` in an already unified archive; every other member's content and mode is retained. The case overlay was backed up, installed with boot-device identity/geometry and old/new hash checks, and read-back verified. No NAS reboot, BIOS/fan-policy change, MyQNAP repair or sudo persistence change was performed. **The corrected cold-start path has not yet been validated by a reboot.** Private host overlays, deployment scripts and backup/log data remain outside this public repository.
+
 The following earlier hardware-page capture shows the CPU, DIMMs and disk temperatures; it predates the later motherboard/fan dashboard repair:
 
 ![CPU, 64 GB memory, four DIMM slots and eight disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
