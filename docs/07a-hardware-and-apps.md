@@ -8,6 +8,8 @@ After storage acceptance, check the hardware pages separately. A recovered pool 
 
 These fixes were verified in the running system on 2026-10-18 and saved into its boot overlay. **The revised overlay has not yet passed a reboot or cold-start test.** The earlier unattended reboot proves the original storage/boot setup, not these later changes. No cache was created and no application files were deleted.
 
+The 2026-10-20 follow-up repaired contention between native temperature/fan readers and revalidated continuous real values. See [updates and rollback](08-updates.md) for the accepted CPU90 policy, latest overlay, and untested reboot/upgrade limits.
+
 ## CPU, motherboard and fan readings
 
 Two separate problems produced a dashboard with only a zero-valued system-temperature row:
@@ -42,7 +44,7 @@ SMBIOS type 38 identified a KCS interface at I/O address `0xca2`, with successiv
 
 These are sampled values, not constants. BMC fan readings use a factor of 100 on this host, matching QTS's IPMI fan interpretation. Sensor numbers, scaling, labels and KCS addresses must be re-established on another board or after relevant firmware changes.
 
-A small local Python adapter implements only the sensor-read subset needed by QTS. Its `ipmitool` entry point accepts `raw 0x04 0x2d` for the four explicitly allowed sensor IDs (49, 52, 97, 98); it is **not a general-purpose ipmitool**. It does not change PWM, fan mode, thresholds or BMC settings. It uses a lock, a bounded transaction timeout and refuses a busy KCS transaction or a newly present native kernel IPMI interface. Direct KCS access is specific to this verified host; do not run an independent kernel/userspace KCS driver concurrently.
+A small local Python adapter implements only the sensor-read subset needed by QTS. Its `ipmitool` entry point accepts `raw 0x04 0x2d` for the four explicitly allowed sensor IDs (49, 52, 97, 98); it is **not a general-purpose ipmitool**. It does not change PWM, fan mode, thresholds or BMC settings. It waits up to 0.5 seconds for the shared process lock so concurrent native temperature and fan readers can serialize. Each hardware transaction retains its three-second limit and refuses a busy KCS state or a newly present native kernel IPMI interface. It never resets KCS to recover a timeout. Direct KCS access is specific to this verified host; do not run an independent kernel/userspace KCS driver concurrently.
 
 The resulting live sensor fields are:
 

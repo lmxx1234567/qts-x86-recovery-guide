@@ -1,6 +1,6 @@
 #!/bin/sh
 # Wait for native initialization and a stable live monitor before changing mappings.
-PATH=/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin
 export PATH
 n=0
 while [ "$n" -lt 120 ]; do

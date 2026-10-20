@@ -9,21 +9,81 @@ STATE='/tmp/qts-mods'
 MODEL='/etc/model.conf';HAL='/etc/hal.conf';PLATFORM='/etc/platform.conf'
 WIDGET='/home/httpd/cgi-bin/js/qos-core-widget.js'
 MODULES=['sensors','cpu_widget','memory','cache_candidates','artwork','myqnap']
+# Per-invocation opt-in through the gated thermal or sensor policy wrappers.
+NATIVE_IPC_GRACE=False
+WORK_DEADLINE=float('inf')
+RECOVERY_DEADLINE=float('inf')
+def monotonic():
+    if hasattr(time,'monotonic'):return time.monotonic()
+    return float(txt('/proc/uptime').split()[0])  # Python 2 on this QTS host.
+def work_remaining():return WORK_DEADLINE-monotonic()
+
 class Skip(Exception):pass
+class CommandTimeout(Skip):
+    def __init__(self,args,timeout,output,processes=None):
+        self.output=output
+        self.processes=processes
+        Skip.__init__(self,'Command timed out after '+str(timeout)+'s: '+repr(args))
 def need(ok,msg):
     if not ok:raise Skip(msg)
 def read(p):
     with open(p,'rb') as f:return f.read()
 def txt(p):return read(p).decode('utf-8')
 def sha(b):return hashlib.sha256(b).hexdigest()
-def run_result(args,timeout=20):
+def timeout_processes(root_pid,proc='/proc'):
+    """Best-effort pre-kill metadata, without argv, environment or memory.
+
+    Keep the client and descendants plus a detached HAL. A PID alone cannot
+    distinguish a helper stuck before daemonization from a running monitor.
+    """
+    rows={};end=time.time()+.2
+    for path in glob.glob(proc+'/[0-9]*/stat')[:4096]:
+        if time.time()>end:break
+        try:
+            raw=txt(path);left=raw.index('(');right=raw.rindex(')')
+            tail=raw[right+2:].split();pid=int(raw[:left].strip())
+            rows[pid]={'pid':pid,'name':raw[left+1:right][:40],
+                       'state':tail[0],'ppid':int(tail[1])}
+        except (IOError,OSError,ValueError,IndexError):continue
+    selected=set([root_pid])
+    for unused in range(16):
+        more=set(p for p,r in rows.items() if r['ppid'] in selected)
+        if more.issubset(selected):break
+        selected.update(more)
+    selected.update(p for p,r in rows.items() if r['name']=='hal_daemon')
+    result=[]
+    for pid in sorted(selected)[:32]:
+        if pid not in rows:continue
+        row=rows[pid];base=proc+'/'+str(pid)
+        for name in ['wchan','syscall']:
+            try:
+                value=txt(base+'/'+name).strip()
+                # syscall arguments can contain addresses; retain only number.
+                row[name]=value.split()[0][:80] if value else ''
+            except (IOError,OSError):pass
+        result.append(row)
+    return result
+
+def run_result(args,timeout=20,kill_group=True):
     # Temporary output avoids pipe deadlocks; isolated process groups bound probes.
+    if NATIVE_IPC_GRACE:
+        timeout=min(timeout,work_remaining());need(timeout>0,'Transaction budget exhausted')
     with tempfile.TemporaryFile() as out:
-        p=subprocess.Popen(args,stdout=out,stderr=out,preexec_fn=os.setsid)
-        end=time.time()+timeout
-        while p.poll() is None and time.time()<end:time.sleep(.05)
+        p=subprocess.Popen(args,stdout=out,stderr=out,preexec_fn=os.setsid,close_fds=True)
+        end=monotonic()+timeout
+        while p.poll() is None and monotonic()<end:time.sleep(.05)
         if p.poll() is None:
-            os.killpg(p.pid,signal.SIGKILL);p.wait();raise Skip('Command timed out: '+args[0])
+            evidence=None
+            if not kill_group:
+                try:evidence=timeout_processes(p.pid)
+                except Exception:evidence=[]  # Diagnostics must not block recovery.
+            # A daemon-manager client can spawn the hardware monitor in its group.
+            # Never kill that group for lifecycle commands.
+            if kill_group:os.killpg(p.pid,signal.SIGKILL)
+            else:p.kill()
+            p.wait()
+            out.seek(0)
+            raise CommandTimeout(args,timeout,out.read(4*1024*1024).decode('utf-8','replace'),evidence)
         out.seek(0);data=out.read(4*1024*1024).decode('utf-8','replace')
         return p.returncode,data
 
@@ -59,31 +119,105 @@ def monitor_matches(action):
     registered,pids=monitor_state()
     return registered==action and (len(pids)==1 if action=='start' else not pids)
 
+def monitor_event(action,phase,started,**details):
+    event={'monitor_action':action,'phase':phase,'time':time.strftime('%Y-%m-%d %H:%M:%S'),
+           'elapsed_seconds':round(time.time()-started,3)}
+    try:
+        registered,pids=monitor_state()
+        event.update(registered=registered,pids=pids)
+    except Exception as e:event['state_error']=str(e)
+    event.update(details)
+    print(json.dumps(event));sys.stdout.flush()
+
 def monitor_action(action,timeout=20):
     need(action in ('start','stop'),'Invalid monitor action')
     monitor_state()  # Refuse unfamiliar registrations before any command.
     args=['/sbin/daemon_mgr','hal_daemon',action,'/sbin/hal_daemon -f']
-    rc,data=run_result(args,timeout)
-    print(json.dumps({'monitor_action':action,'returncode':rc,'output':data[:1000]}));sys.stdout.flush()
-    # Only this bounded, explicitly verified daemon_mgr transition accepts exit 1.
+    started=time.time()
+    monitor_event(action,'begin',started,argv=args)
+    try:
+        if NATIVE_IPC_GRACE:
+            from native_start_window import execute
+            rc,data,bounded_end=execute(sys.modules[__name__],action,timeout)
+        else:rc,data=run_result(args,timeout,kill_group=False)
+    except CommandTimeout as e:
+        monitor_event(action,'timeout',started,output=e.output[:4000],processes=e.processes)
+        # State is diagnostic only: an uncompleted request is not success.
+        raise
+    except Exception as e:
+        monitor_event(action,'error',started,error=str(e))
+        raise
+    monitor_event(action,'returned',started,returncode=rc,output=data[:4000])
     need(rc in (0,1),'Monitor command failed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
-    end=time.time()+timeout
+    end=bounded_end if NATIVE_IPC_GRACE else time.time()+timeout
     while True:
-        if monitor_matches(action):return
-        need(time.time()<end,'Monitor transition unconfirmed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
+        if monitor_matches(action):
+            monitor_event(action,'confirmed',started)
+            return
+        if (monotonic() if NATIVE_IPC_GRACE else time.time())>=end:
+            monitor_event(action,'unconfirmed',started)
+            raise Skip('Monitor transition unconfirmed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
         time.sleep(.25)
 
-def restart_monitor():
+def validate_sensor_readiness(p,raw,cache):
+    need(p.get('temp_count')==2 and p.get('fan_count')==2,'Native sensor counts not ready')
+    need(len(p['temperature'])==2 and all(r==0 and 0<v<110 for r,v in p['temperature']),'HAL temperatures not ready')
+    need(len(p['fan'])==2 and all(r==0 and 0<v<10000 for r,v in p['fan']),'HAL fans not ready')
+    need(abs(p['temperature'][1][1]-raw[0])<8,'HAL/BMC motherboard scale mismatch')
+    need(all(abs(p['fan'][i][1]-raw[i+1]*100)<800 for i in range(2)),'HAL/BMC fan scale mismatch')
+    keys=['CPUT_1','TEMP_1','FANR_1','FANR_2']
+    need(all(int(cache.get(k,'0'))>0 for k in keys),'Native sensor cache missing fields: '+','.join(k for k in keys if int(cache.get(k,'0'))<=0))
+    need(abs(int(cache['TEMP_1'])-raw[0])<8,'Cache/BMC motherboard scale mismatch')
+    need(all(abs(int(cache['FANR_'+str(i+1)])-raw[i+1]*100)<800 for i in range(2)),'Cache/BMC fan scale mismatch')
+
+SENSOR_CACHE_KEYS=['TEMP_1','SYST_1','FANR_1','FANR_2','FANS_1','FANS_2']
+def without_sensor_cache(data):
+    text=data.decode('utf-8');fields(text,'INFO')
+    for key in SENSOR_CACHE_KEYS:text=re.sub(r'(?m)^'+key+r'\s*=.*(?:\n|$)','',text)
+    return text.encode('utf-8')
+def clear_sensor_cache():
+    need(monitor_matches('stop'),'Refuse cache cleanup while monitor runs')
+    path='/tmp/em/em_0.info';before=read(path);after=without_sensor_cache(before)
+    if after!=before:
+        folder=tempfile.mkdtemp(prefix='sensor-cache-',dir=STATE)
+        atomic(folder+'/before',before,0o600)
+        need(read(path)==before,'Cache changed concurrently')
+        atomic(path,after,stat.S_IMODE(os.stat(path).st_mode))
+        print(json.dumps({'sensor_cache_cleanup':SENSOR_CACHE_KEYS,'backup':folder}));sys.stdout.flush()
+
+def restart_monitor(clean_sensor_cache=False):
+    if NATIVE_IPC_GRACE:
+        old_pids=monitor_state()[1]
+        old_cache=os.stat('/tmp/em/em_0.info').st_mtime
+        expected=fields(txt('/etc/hal_util.conf'),'SHUTDOWN TEMP')
+        thresholds=tuple(expected[k] for k in ['CPU_TEMP','SYS_TEMP','DISK_TEMP','POWER_TEMP'])
     try:
         if not monitor_matches('stop'):monitor_action('stop')
     except Exception as original:
         # A stop may have taken effect even when its command failed or timed out.
         # Restore availability before reporting failure; do not suppress the original.
-        try:monitor_action('start')
+        try:
+            if not monitor_matches('start'):monitor_action('start')
         except Exception as recovery:
             raise Skip('Monitor stop failed: '+str(original)+'; recovery start failed: '+str(recovery))
         raise
+    if clean_sensor_cache:clear_sensor_cache()
     monitor_action('start')
+    if NATIVE_IPC_GRACE:
+        end=min(monotonic()+15,WORK_DEADLINE)
+        while True:
+            registered,pids=monitor_state()
+            log=txt('/var/log/hal_daemon.log')
+            values=re.findall(r'SHUTDOWN TEMP CPU:SYS:DISK:PWR = (\d+):(\d+):(\d+):(\d+)',log)
+            fresh=(len(pids)==1 and pids[0] not in old_pids and
+                   'hal_daemon start. (pid='+str(pids[0])+')' in log)
+            cache=fields(txt('/tmp/em/em_0.info'),'INFO')
+            if (registered=='start' and fresh and values and tuple(values[-1])==thresholds and
+                os.stat('/tmp/em/em_0.info').st_mtime>old_cache and int(cache.get('CPUT_1','0'))>0):
+                monitor_event('start','native_ready',time.time(),thresholds=thresholds,cache=cache)
+                break
+            need(monotonic()<end,'Fresh monitor threshold/cache readiness timed out')
+            time.sleep(.1)
 
 def startup_ready():
     try:
@@ -247,6 +381,7 @@ class Context(object):
         if expected is None:expected={p:read(p) if os.path.exists(p) else None for p in updates}
         return transact(name,updates,expected,verify,self.check,after,undo,rollback_merge)
     def sensors(self):
+        need(NATIVE_IPC_GRACE or not os.path.exists(BASE+'/sensors.pending'),'Sensor repair awaiting explicit validation; CPU policy independent')
         need(not os.path.exists('/dev/ipmi0') and not os.path.exists('/dev/ipmi/0'),'Native IPMI driver present; direct KCS skipped')
         from kcs_read import command
         readings=[]
@@ -268,21 +403,29 @@ class Context(object):
         settings_changed=m.encode('utf-8')!=original[MODEL] or h.encode('utf-8')!=original[HAL]
         restarted=[False]
         def restart():
-            restart_monitor()
+            restart_monitor(clean_sensor_cache=NATIVE_IPC_GRACE)
         def after(changed):
             if settings_changed and changed:
-                restarted[0]=True;restart();time.sleep(20)
+                restarted[0]=True;restart()
+                if not NATIVE_IPC_GRACE:time.sleep(20)
         def undo(changed):
+            global WORK_DEADLINE
+            if NATIVE_IPC_GRACE:WORK_DEADLINE=RECOVERY_DEADLINE
             if restarted[0]:restart()
         def verify():
-            p=self.probe('sensors')
-            need(all(r==0 and 0<v<110 for r,v in p['temperature']),'HAL temperatures invalid')
-            need(all(r==0 and 0<v<10000 for r,v in p['fan']),'HAL fan values invalid')
-            raw=[command(4,0x2d,[sid])[0] for sid in [49,97,98]]
-            need(abs(p['temperature'][1][1]-raw[0])<8,'HAL/BMC motherboard scale mismatch')
-            need(all(abs(p['fan'][i][1]-raw[i+1]*100)<800 for i in range(2)),'HAL/BMC fan scale mismatch')
-            cache=fields(txt('/tmp/em/em_0.info'),'INFO')
-            need(all(int(cache.get(k,'0'))>0 for k in ['CPUT_1','SYST_1','FANR_1','FANR_2']),'Monitor cache readings absent')
+            end=min(monotonic()+30,WORK_DEADLINE) if NATIVE_IPC_GRACE else monotonic()
+            reason='Sensor initialization incomplete'
+            while True:
+                p=self.probe('sensors')
+                raw=[command(4,0x2d,[sid])[0] for sid in [49,97,98]]
+                cache=fields(txt('/tmp/em/em_0.info'),'INFO')
+                print(json.dumps({'sensor_verification':p,'bmc_raw':raw,'native_cache':cache}));sys.stdout.flush()
+                try:
+                    validate_sensor_readiness(p,raw,cache)
+                    return
+                except Skip as error:reason=str(error)
+                need(monotonic()<end,reason)
+                time.sleep(.5)
         return self.apply('sensors',{MODEL:m.encode('utf-8'),HAL:h.encode('utf-8'),'/sbin/ipmitool':shim},verify,after,undo,original)
     def cpu_widget(self):
         original=read(WIDGET);desired=widget(original.decode('utf-8')).encode('utf-8')
@@ -376,6 +519,20 @@ class Context(object):
             result['cache_needs_refresh']=cache_problem
         return result
 
+def run_sensors(context):
+    """Accepted sensor policy with the same bounded lifecycle used at validation."""
+    global NATIVE_IPC_GRACE,WORK_DEADLINE,RECOVERY_DEADLINE
+    need(not os.path.exists(BASE+'/sensors.pending'),'Sensor repair awaiting explicit validation; CPU policy independent')
+    from native_start_window import KNOWN
+    for path,digest in KNOWN.items():need(sha(read(path))==digest,'Unverified native sensor binary: '+path)
+    need(monitor_matches('start'),'Hardware monitor not healthy')
+    cpu=[p for p in glob.glob('/sys/class/hwmon/hwmon*') if txt(p+'/name').strip()=='k10temp']
+    need(len(cpu)==1 and 0<int(txt(cpu[0]+'/temp1_input'))<75000,'CPU too hot or invalid for monitor restart')
+    prior=(NATIVE_IPC_GRACE,WORK_DEADLINE,RECOVERY_DEADLINE)
+    begin=monotonic();NATIVE_IPC_GRACE=True;WORK_DEADLINE=begin+60;RECOVERY_DEADLINE=begin+120
+    try:return context.sensors()
+    finally:NATIVE_IPC_GRACE,WORK_DEADLINE,RECOVERY_DEADLINE=prior
+
 def main():
     if '--startup-ready' in sys.argv:return 0 if startup_ready() else 1
     selected=['sensors'] if '--only-sensors' in sys.argv else MODULES
@@ -390,7 +547,7 @@ def main():
         except Exception as e:results={n:{'state':'skipped','reason':str(e)} for n in selected}
         else:
             for n in selected:
-                try:results[n]=getattr(c,n)()
+                try:results[n]=run_sensors(c) if n=='sensors' else getattr(c,n)()
                 except Exception as e:results[n]={'state':'skipped','reason':str(e)}
         report={'package':'1.1','scope':selected,'firmware':c.firmware if c else None,'check_only':check,'modules':results,'time':time.strftime('%Y-%m-%d %H:%M:%S')}
         print(json.dumps(report,indent=2))

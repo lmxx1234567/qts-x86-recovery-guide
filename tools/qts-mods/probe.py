@@ -10,7 +10,8 @@ if mode=='symbols':
 elif mode=='sensors':
     h.HM_Get_Temperature.argtypes=[ctypes.c_int,ctypes.c_int,ctypes.POINTER(ctypes.c_double)]
     h.HM_Get_Fan.argtypes=[ctypes.c_int,ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.POINTER(ctypes.c_int)]
-    out={'temperature':[],'fan':[]}
+    h.SE_Get_TEMP_Num.argtypes=[ctypes.c_int];h.SE_Get_FAN_Num.argtypes=[ctypes.c_int]
+    out={'temperature':[],'fan':[],'temp_count':h.SE_Get_TEMP_Num(0),'fan_count':h.SE_Get_FAN_Num(0)}
     for i in [0,5]:
         v=ctypes.c_double();r=h.HM_Get_Temperature(0,i,ctypes.byref(v));out['temperature'].append([r,v.value])
     for i in [0,1]:

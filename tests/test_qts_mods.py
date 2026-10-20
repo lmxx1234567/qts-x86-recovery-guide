@@ -71,7 +71,7 @@ class Mods(unittest.TestCase):
      return {'state':'ok','changed':[]}
     pp=patch.object(m.Context,name,call);pp.start();patches.append(pp)
    try:
-    with patch.object(m.os,'geteuid',return_value=0),patch.object(m,'private_dir'),patch.object(sys,'argv',['reconcile.py']):self.assertEqual(m.main(),1)
+    with patch.object(m.os,'geteuid',return_value=0),patch.object(m,'private_dir'),patch.object(sys,'argv',['reconcile.py']),patch.object(m,'run_sensors',side_effect=lambda c:c.sensors()):self.assertEqual(m.main(),1)
    finally:
     for p in patches:p.stop()
    self.assertEqual(called,m.MODULES);self.assertEqual(notify.call_count,1)
