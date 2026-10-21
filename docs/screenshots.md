@@ -215,3 +215,7 @@ Historical MD member examination: RAID level, size, role and event counters. Dev
 ![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sdh3-en.png)
 
 [View screenshot](../assets/screenshots/raid-sdh3.png)
+
+## QTS 6.1 follow-up
+
+The [upgrade report](11-qts61-upgrade.md#recovered-storage-and-monitoring) shows the original RAID groups Ready, both Qtier tiers and native CPU/motherboard readings after the 6.1 migration. These are later physical-host results, separate from the original 5.2 reboot screenshots.

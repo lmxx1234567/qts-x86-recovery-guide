@@ -10,10 +10,11 @@
 
 仓库不包含官方固件、第三方引导二进制、私人账号或原始磁盘数据。
 
-## 这台自组 QTS 的配置
+## 选择系统版本
 
-**Ryzen 7 5800X（8 核 16 线程）· 64 GiB ECC · 八个 SATA 盘位 · 原 Qtier 池恢复**。主板为 ASRock Rack X570D4U-2L2T，内存为两条 32 GiB、3200 MT/s；独立 Samsung 980 NVMe 负责引导，原两块 4 TB SSD RAID1 + 三块 8 TB HDD RAID5 组成恢复后的 Qtier 池。
+- **5.2 稳定版**：2026-10-22 官方清单最新为 5.2.11.3652；本项目已验证的旧基线是 5.2.10，不把新下载版本冒充已测试版本。
+- **6.1 Beta**：6.1.0.3640，TS-X73A；已完成 VM 原生手动升级、磁盘独立冷启动，以及实体机原 Qtier 盘组恢复。
 
-![CPU、64 GB 内存、四个插槽和温度](assets/screenshots/hardware-status-native-en.jpg)
+两条路都使用同一份[逐步命令流程](docs/10-command-walkthrough.md)，只在[版本选择与差异](docs/02a-release-tracks.md)中设置不同参数。已有自组 QTS 的用户另见[已有安装升级分支](docs/11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation)。共同步骤不重复抄写。
 
-已修正 CPU 温度、内存拓扑、八大盘位预览和全部八个盘位的缓存资格；没有创建缓存，也没有删除 ARM64 旧应用。主板温度尚未接入 QTS。新增修正已在线验证并保存到启动覆盖包，但尚未重启复验。详见[硬件显示与应用迁移](docs/07a-hardware-and-apps.md)。
+主板温度和风扇已完成在线适配，最终持久化监控配置还没有再次实体冷启动复验。数据恢复、应用兼容、监控、自动更新分别验收；手动更新成功不等于无人值守更新已验证。CPU91 是本机操作员选择，不能照搬到其他硬件。

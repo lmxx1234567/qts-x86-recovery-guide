@@ -1,15 +1,28 @@
 #!/bin/sh
-# Bounded one-shot startup. No firmware installer or reboot command.
+# Wait for native initialization and a stable live monitor before changing mappings.
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
+choose_runtime() {
+ for candidate in /usr/local/bin/python3 /usr/bin/python3 /mnt/ext/opt/Python3/bin/python3 /usr/local/bin/python /mnt/ext/opt/Python/bin/python; do
+  [ -x "$candidate" ] || continue
+  "$candidate" -c 'import sys,ctypes,json,hashlib,subprocess,fcntl,xml.etree.ElementTree; assert sys.version_info >= (2,7)' >/dev/null 2>&1 || continue
+  runtime=$candidate
+  return 0
+ done
+ return 1
+}
 n=0
 while [ "$n" -lt 120 ]; do
- if [ -x /usr/local/bin/python ] && [ -f /etc/hal.conf ] && [ -f /tmp/em/em_0.info ]; then
+ if choose_runtime && "$runtime" /qts-profile/mods/reconcile.py --startup-ready; then
   sleep 30
-  exec /usr/local/bin/python /qts-profile/mods/reconcile.py
+  n=$((n + 6))
+  if "$runtime" /qts-profile/mods/reconcile.py --startup-ready; then
+   exec > /tmp/qts-mods-start.log 2>&1
+   exec "$runtime" /qts-profile/mods/reconcile.py
+  fi
  fi
  sleep 5
  n=$((n + 1))
 done
-/sbin/notice_log_tool -a '[QTS Mods] Startup prerequisites unavailable after 10 minutes; all mods skipped. No firmware installation or reboot.' -t 4 -y 17 -G 0 -u System
+/sbin/notice_log_tool -a '[QTS Mods] Native startup/monitor not ready; all mods skipped. No firmware installation or reboot.' -t 4 -y 17 -G 0 -u System
 exit 1

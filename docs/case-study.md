@@ -1,5 +1,10 @@
 # Case study: one successful x86 Qtier recovery
 
+## Later 6.1 milestone (2026-10-22)
+
+The same physical build subsequently moved from X77/5.2 to X73A/6.1.0.3640, kernel 6.6.129-qnap. Its complete original five-disk Qtier set returned with both RAID tiers and volumes Ready. The VM native-update test, physical offline boot-image upgrade, monitoring repair and their limits are documented together in [QTS 6.1 upgrade and results](11-qts61-upgrade.md). The narrative below describes the original 5.2 recovery, not the later upgrade.
+
+
 Recorded 2026-10-17–18. Identifying information is removed. This is one measured setup, not a support matrix.
 
 | Component | Observed setup |

@@ -1,7 +1,7 @@
 # 2. Firmware, loader and dependencies
 
 <!-- stage-navigation -->
-[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Choose a release →](02a-release-tracks.md)
 <!-- /stage-navigation -->
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
@@ -9,7 +9,7 @@ For concrete commands and environment prerequisites, use the [ordered command wa
 
 ## Select a family, not a CPU marketing name
 
-The observed profile was TS-877 / TS-X77, with QTS 5.2.10.3577 build 20260731 and kernel 5.10.60-qnap. This is a tested version, not a recommendation to install it forever. Check current security advisories and download availability at the [official download center](https://www.qnap.com/en/download).
+Choose [Track A: current QTS 5.2 stable or Track B: QTS 6.1 Beta](02a-release-tracks.md) before downloading. The original installation used TS-877 / TS-X77, QTS 5.2.10.3577 and kernel 5.10.60-qnap; the later physical upgrade used TS-873A / TS-X73A, QTS 6.1.0.3640 and kernel 6.6.129-qnap. These are tested observations, not permanent version pins. Check current security advisories and download availability at the [official download center](https://www.qnap.com/en/download).
 
 A newer AMD-based QNAP does not automatically offer a better compatible image. Compare the kernel, storage/NIC drivers, HAL/model configuration, boot layout and updater behavior. The X77, X77U and X77AX packages examined during this work were not interchangeable merely because the kernel version string matched. An examined X77AX package also contained EFI/GRUB replacement material, making preservation of a custom boot path a separate test.
 
@@ -21,7 +21,9 @@ This repository contains original documentation and helper code. It does **not**
 
 A QNAP firmware `.img` inside a download ZIP is an **update package**, not a raw boot-disk image. Writing it directly to an SSD is not the procedure used here. Extraction in the experiment used the community qnap-recovery PC1 utility; see [sources](sources.md). Confirm the extractor handles integer widths correctly on your build platform and verify the extracted payload. Do not disable firmware signature checks to make an update appear successful.
 
-### Downloads used in this case
+### Historical downloads used in the first 5.2 case
+
+For current stable/Beta URLs and the exact shell variables used by both routes, use [Release selection](02a-release-tracks.md). The older links below explain the initial experiment; they are not the latest stable selection.
 
 These are the specific inputs used in the experiment, not a compatibility guarantee for other hardware or a recommendation to use an older release.
 
@@ -46,6 +48,8 @@ The resulting `.img` still needs the firmware extraction procedure in the [comma
 
 ## Build inputs
 
+Follow [walkthrough sections 1–5](10-command-walkthrough.md) to obtain or create each item below. Inputs 3–5 are built locally, not additional vendor downloads. Select the firmware once; the remaining workflow is shared.
+
 1. An independently obtained bootable DOM/EFI base image with known partition geometry.
 2. Extracted official boot payload for one selected firmware version, including its associated signature/checksum files.
 3. A hardware-specific `model.conf` and guarded early-init wrapper.
@@ -58,5 +62,5 @@ The original two firmware slots were p2/p3, support was p7, and EFI was p1. Thes
 ---
 
 <!-- stage-navigation -->
-[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Choose a release →](02a-release-tracks.md)
 <!-- /stage-navigation -->

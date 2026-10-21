@@ -16,17 +16,84 @@ def read(p):
     with open(p,'rb') as f:return f.read()
 def txt(p):return read(p).decode('utf-8')
 def sha(b):return hashlib.sha256(b).hexdigest()
-def run(args,timeout=20):
+def run_result(args,timeout=20,kill_group=True):
     # Temporary output avoids pipe deadlocks; isolated process groups bound probes.
     with tempfile.TemporaryFile() as out:
-        p=subprocess.Popen(args,stdout=out,stderr=out,preexec_fn=os.setsid)
+        p=subprocess.Popen(args,stdout=out,stderr=out,preexec_fn=os.setsid,close_fds=True)
         end=time.time()+timeout
         while p.poll() is None and time.time()<end:time.sleep(.05)
         if p.poll() is None:
-            os.killpg(p.pid,signal.SIGKILL);p.wait();raise Skip('Command timed out: '+args[0])
+            # The daemon-manager client may share a process group with its monitor.
+            if kill_group:os.killpg(p.pid,signal.SIGKILL)
+            else:p.kill()
+            p.wait();raise Skip('Command timed out: '+args[0])
         out.seek(0);data=out.read(4*1024*1024).decode('utf-8','replace')
-        need(p.returncode==0,'Command failed: '+args[0]+' (exit '+str(p.returncode)+')')
-        return data
+        return p.returncode,data
+
+def run(args,timeout=20):
+    rc,data=run_result(args,timeout)
+    need(rc==0,'Command failed: '+repr(args)+' (exit '+str(rc)+'): '+data[:1000])
+    return data
+
+
+# daemon_mgr can return 1 after changing state. Never treat that code alone as success.
+def process_ids(argv,proc='/proc'):
+    found=[]
+    for path in glob.glob(proc+'/[0-9]*/cmdline'):
+        try:
+            args=read(path).split(b'\0')
+            args=[a.decode('utf-8','replace') for a in args if a]
+            if args==argv:found.append(int(path.split('/')[-2]))
+        except (IOError,OSError):pass  # Process exited while scanning.
+    return found
+
+def monitor_state():
+    rows=[]
+    for line in txt('/etc/daemon_mgr.conf').splitlines():
+        if '=' not in line:continue
+        parts=[p.strip() for p in line.split('=',1)[1].split(',',2)]
+        if parts and parts[0]=='hal_daemon':rows.append(parts)
+    need(len(rows)==1 and len(rows[0])==3 and rows[0][2]=='/sbin/hal_daemon -f',
+         'Unknown/duplicate hardware monitor registration')
+    need(rows[0][1] in ('start','stop'),'Unknown hardware monitor action')
+    return rows[0][1],process_ids(['/sbin/hal_daemon','-f'])
+
+def monitor_matches(action):
+    registered,pids=monitor_state()
+    return registered==action and (len(pids)==1 if action=='start' else not pids)
+
+def monitor_action(action,timeout=35):
+    need(action in ('start','stop'),'Invalid monitor action')
+    monitor_state()  # Refuse unfamiliar registrations before any command.
+    args=['/sbin/daemon_mgr','hal_daemon',action,'/sbin/hal_daemon -f']
+    rc,data=run_result(args,timeout,kill_group=False)
+    print(json.dumps({'monitor_action':action,'returncode':rc,'output':data[:1000]}));sys.stdout.flush()
+    # Only this bounded, explicitly verified daemon_mgr transition accepts exit 1.
+    need(rc in (0,1),'Monitor command failed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
+    end=time.time()+timeout
+    while True:
+        if monitor_matches(action):return
+        need(time.time()<end,'Monitor transition unconfirmed: '+repr(args)+' exit '+str(rc)+': '+data[:1000])
+        time.sleep(.25)
+
+def restart_monitor():
+    try:
+        if not monitor_matches('stop'):monitor_action('stop')
+    except Exception as original:
+        # A stop may have taken effect even when its command failed or timed out.
+        # Restore availability before reporting failure; do not suppress the original.
+        try:monitor_action('start')
+        except Exception as recovery:
+            raise Skip('Monitor stop failed: '+str(original)+'; recovery start failed: '+str(recovery))
+        raise
+    monitor_action('start')
+
+def startup_ready():
+    try:
+        return (not os.path.exists('/tmp/booting') and
+                os.path.isfile('/etc/hal.conf') and
+                len(process_ids(['/sbin/daemon_mgr']))==1 and monitor_matches('start'))
+    except (IOError,OSError,Skip):return False
 
 def sections(s):
     out={}
@@ -165,8 +232,11 @@ class Context(object):
     def probe(self,mode,*args):return json.loads(run([sys.executable,BASE+'/probe.py',mode]+list(args),30))
     def gate(self):
         need(self.p.get('format')==1 and self.p.get('enabled') is True,'Host profile not enabled')
-        need(len(self.p.get('protected_sections',{}))>=10 and len(self.p.get('identity_tokens',[]))>=2,'Incomplete host identity/mapping profile')
-        v=run(['/sbin/getcfg','System','Version']).strip();need(v.startswith(self.p['release_prefix']),'Unsupported QTS release family')
+        protected=self.p.get('protected_sections',{})
+        need(all(n in protected for n in ['Boot Enclosure','Boot Disk 1']) and any(n.startswith('System Disk ') for n in protected) and any(n.startswith('System Network ') for n in protected) and len(self.p.get('identity_tokens',[]))>=2,'Incomplete host identity/mapping profile')
+        v=run(['/sbin/getcfg','System','Version']).strip()
+        need(bool(v) and len(v)<128,'Missing/invalid firmware identity')
+        # Each module still validates identity, protected mapping and capabilities.
         build=run(['/sbin/getcfg','System','Build Number']).strip();self.firmware=v+' '+build
         dmi=run(['/sbin/dmidecode','-t','2','-t','38'])
         for token in self.p['identity_tokens']:need(token in dmi,'Host identity/KCS mismatch')
@@ -202,9 +272,10 @@ class Context(object):
         m=setfields(m,'System FAN',{'FAN_UNIT':'IPMI','FAN_1':'I97','FAN_2':'I98'},create=True)
         h=setfields(h,'Enclosure_0',{'max_temp_num':'2','max_fan_num':'2'},{'max_temp_num':['1','2'],'max_fan_num':['0','2']})
         settings_changed=m.encode('utf-8')!=original[MODEL] or h.encode('utf-8')!=original[HAL]
+        if settings_changed:need(int(txt(cpu[0]+'/temp1_input'))<75000,'CPU too hot for sensor-monitor restart; retry after cooling')
         restarted=[False]
         def restart():
-            run(['/sbin/daemon_mgr','hal_daemon','stop','/sbin/hal_daemon -f']);run(['/sbin/daemon_mgr','hal_daemon','start','/sbin/hal_daemon -f'])
+            restart_monitor()
         def after(changed):
             if settings_changed and changed:
                 restarted[0]=True;restart();time.sleep(20)
@@ -212,15 +283,22 @@ class Context(object):
             if restarted[0]:restart()
         def verify():
             p=self.probe('sensors')
+            need(p.get('temp_count')==2 and p.get('fan_count')==2 and len(p['temperature'])==2 and len(p['fan'])==2,'Sensor counts not ready')
             need(all(r==0 and 0<v<110 for r,v in p['temperature']),'HAL temperatures invalid')
             need(all(r==0 and 0<v<10000 for r,v in p['fan']),'HAL fan values invalid')
             raw=[command(4,0x2d,[sid])[0] for sid in [49,97,98]]
             need(abs(p['temperature'][1][1]-raw[0])<8,'HAL/BMC motherboard scale mismatch')
             need(all(abs(p['fan'][i][1]-raw[i+1]*100)<800 for i in range(2)),'HAL/BMC fan scale mismatch')
             cache=fields(txt('/tmp/em/em_0.info'),'INFO')
-            need(all(int(cache.get(k,'0'))>0 for k in ['CPUT_1','SYST_1','FANR_1','FANR_2']),'Monitor cache readings absent')
+            need(all(int(cache.get(k,'0'))>0 for k in ['CPUT_1','TEMP_1','FANR_1','FANR_2']),'Monitor cache readings absent')
         return self.apply('sensors',{MODEL:m.encode('utf-8'),HAL:h.encode('utf-8'),'/sbin/ipmitool':shim},verify,after,undo,original)
     def cpu_widget(self):
+        if not os.path.isfile(WIDGET):
+            modern='/home/httpd/cgi-bin/js/desktop/dashboard/widgets/temperature.js'
+            need(os.path.isfile(modern),'No recognized temperature UI; native files preserved')
+            ui=txt(modern)
+            need('appendTempSensors(' in ui and 'if(h.cpuTempC!=null)' in ui and 'label:"CPU"' in ui and 'TS-X82' not in ui,'Unknown native temperature UI; native files preserved')
+            return {'state':'native','changed':[],'reason':'Native temperature widget already handles CPU readings; legacy patch unnecessary'}
         original=read(WIDGET);desired=widget(original.decode('utf-8')).encode('utf-8')
         return self.apply('cpu_widget',{WIDGET:desired},lambda:need(widget(txt(WIDGET)).encode('utf-8')==read(WIDGET),'Widget verification failed'),expected={WIDGET:original})
     def memory(self):
@@ -258,8 +336,10 @@ class Context(object):
         self.probe('symbols','SE_Get_Cacheable_Port_Bitmap')
         originals={p:read(p) for p in [MODEL,HAL]}
         m=originals[MODEL].decode('utf-8');h=originals[HAL].decode('utf-8')
-        need(fields(m,'System Enclosure')['MAX_DISK_NUM']=='8' and fields(h,'Enclosure_0')['max_disk_num']=='8','Unexpected bay count')
-        mask=self.p['cache_mask'];need(mask=='0x1FE','Unreviewed cache policy')
+        bays=len([n for n in self.p['protected_sections'] if n.startswith('System Disk ')])
+        need(bays>0 and int(fields(m,'System Enclosure')['MAX_DISK_NUM'])==bays and int(fields(h,'Enclosure_0')['max_disk_num'])==bays,'Unexpected bay count')
+        mask=self.p['cache_mask'];bits=int(mask,16)
+        need(bits>=0 and not bits & ~((1 << (bays+1))-2),'Cache policy includes an unmapped port')
         m=setfields(m,'System Enclosure',{'SYSTEM_DISK_CACHEABLE_BITMAP':mask},{'SYSTEM_DISK_CACHEABLE_BITMAP':['0x0',mask]})
         h=setfields(h,'Enclosure_0',{'cache_port_bitmap':mask},{'cache_port_bitmap':['0x0',mask]})
         def verify():
@@ -278,6 +358,7 @@ class Context(object):
             updates[dest]=src;expected[dest]=old
         return self.apply('artwork',updates,expected=expected)
     def myqnap(self):
+        need('myqnap' in self.p,'Repository adaptation not configured for this host')
         spec=self.p['myqnap'];repo='/etc/config/3rd_pkg_v2.conf';cron='/etc/config/crontab'
         need(os.path.realpath('/home/httpd/RSS/rssdoc')==os.path.realpath('/etc/config/rssdoc'),'Local repository route changed')
         need(os.access('/usr/bin/crontab',os.X_OK) and os.access('/sbin/curl',os.X_OK),'Repository dependencies absent')
@@ -313,6 +394,8 @@ class Context(object):
         return result
 
 def main():
+    if '--startup-ready' in sys.argv:return 0 if startup_ready() else 1
+    selected=['sensors'] if '--only-sensors' in sys.argv else MODULES
     need(os.geteuid()==0,'Root required');private_dir(STATE)
     lock=os.open(STATE+'/lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
     try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -321,17 +404,19 @@ def main():
         check='--check' in sys.argv;c=None;results={}
         try:
             profile=json.loads(txt(BASE+'/profile.json'));c=Context(profile,check);c.gate()
-        except Exception as e:results={n:{'state':'skipped','reason':str(e)} for n in MODULES}
+        except Exception as e:results={n:{'state':'skipped','reason':str(e)} for n in selected}
         else:
-            for n in MODULES:
+            for n in selected:
                 try:results[n]=getattr(c,n)()
                 except Exception as e:results[n]={'state':'skipped','reason':str(e)}
-        report={'package':'1.0','firmware':c.firmware if c else None,'check_only':check,'modules':results,'time':time.strftime('%Y-%m-%d %H:%M:%S')}
+        report={'package':'1.1','scope':selected,'firmware':c.firmware if c else None,'check_only':check,'modules':results,'time':time.strftime('%Y-%m-%d %H:%M:%S')}
         print(json.dumps(report,indent=2))
         if not check:
             old={}
             try:old=json.loads(txt(STATE+'/status.json'))
             except (IOError,ValueError):pass
+            if '--only-sensors' in sys.argv:
+                report['previous_modules']=old.get('modules',{})
             atomic(STATE+'/status.json',(json.dumps(report,indent=2)+'\n').encode('utf-8'),0o600)
             summary='; '.join(n+': '+r['state']+(' ('+r['reason'][:150]+')' if 'reason' in r else '') for n,r in sorted(results.items()))
             def signature(rs):return {n:(r['state']=='skipped',r.get('reason')) for n,r in rs.items()}

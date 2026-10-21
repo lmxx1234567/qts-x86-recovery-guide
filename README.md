@@ -6,11 +6,20 @@ An evidence-based field guide to booting QTS on non-QNAP x86 hardware and recove
 
 **This is a recovery engineering guide, not a universal installer or an officially supported QNAP migration destination.** Start with copies of your disks when possible. A normal QTS boot can write to attached disks before you click anything. If the data is irreplaceable and members are failing, stop experiments on the originals and arrange recovery imaging.
 
+## Choose your release
+
+| Route | Current selection (checked 2026-10-22) | Start here |
+|---|---|---|
+| **QTS 5.2 stable** | 5.2.11.3652 / 20261014, TS-X77 reference; previous 5.2.10 baseline tested | [Release choice and downloads](docs/02a-release-tracks.md) |
+| **QTS 6.1 Public Beta** | 6.1.0.3640 / 20261007, TS-X73A reference; VM upgrade and physical Qtier recovery tested | [Release choice and differences](docs/02a-release-tracks.md) |
+
+Both routes use **one [step-by-step command walkthrough](docs/10-command-walkthrough.md)**. Choose firmware/profile variables once; extraction, image construction, VM testing, installation, bay mapping and storage recovery are shared. Newer releases must pass the same gates—“latest available” does not mean “tested here.” Already running custom QTS 5.2? Use the [existing-installation upgrade branch](docs/11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation).
+
 ## The build: a Ryzen-powered QTS NAS
 
 **8 cores / 16 threads · 64 GiB ECC memory · 8 SATA bays · recovered SSD + HDD Qtier**
 
-The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the original tiered storage back online. This is a custom x86 build using a TS-877 profile, not a factory QNAP appliance or a benchmark claim.
+The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the original tiered storage back online. The original installation used TS-877/X77; the later 6.1 upgrade uses TS-873A/X73A on the same hardware. This is a custom build, not a factory QNAP appliance or a benchmark claim.
 
 | Component | This build |
 |---|---|
@@ -20,11 +29,11 @@ The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the origin
 | Bays | Eight mapped SATA positions, with an eight-large-bay front preview |
 | Recovered Qtier | 2 × 4 TB SSD RAID1 + 3 × 8 TB HDD RAID5; QTS reports an 18.17 TB pool |
 | Dedicated boot | Samsung 980 500 GB NVMe |
-| Monitoring | CPU temperature and all eight SATA disk temperatures visible in QTS |
+| Monitoring | CPU, motherboard temperature and two fan readings validated after the 6.1 follow-up; thermal policy is host-specific |
 
 ![Ryzen 5800X, 64 GB ECC memory and temperatures](assets/screenshots/hardware-status-native-en.jpg)
 
-*Motherboard temperature remains Not Supported; the DIMM manufacturer label remains Unknown. Hardware-display and cache-candidate fixes are live-verified and saved in the boot overlay, but their post-change reboot test is still pending. See [hardware and app follow-up](docs/07a-hardware-and-apps.md).*
+*The screenshot above records the original 5.2 hardware page. The later [6.1 results](docs/11-qts61-upgrade.md) include recovered storage and repaired motherboard/fan monitoring. Final monitoring persistence has not yet been retested by a physical cold boot.*
 
 ## What worked
 
@@ -55,6 +64,7 @@ After reading scope and backup requirements, follow the [Linux command walkthrou
 | 0 | [Scope and decisions](docs/00-scope.md) | Correct OS/storage family identified |
 | 1 | [Inventory and backup](docs/01-inventory.md) | Every member identified; recovery copy/backup strategy recorded |
 | 2 | [Firmware and loader](docs/02-firmware.md) | Provenance, exact versions and boot dependencies recorded |
+| 2a | [Choose a release](docs/02a-release-tracks.md) | Stable/Beta family, exact package and validation limits selected |
 | 3 | [VM validation](docs/03-vm-validation.md) | Initialize disposable disks, update and cold-boot successfully |
 | 4 | [Build and install](docs/04-build-and-install.md) | Verified image on the intended dedicated boot SSD |
 | 5 | [Map every bay](docs/05-bay-mapping.md) | Scan **and** per-disk HAL reverse lookup pass |
@@ -62,6 +72,8 @@ After reading scope and backup requirements, follow the [Linux command walkthrou
 | 7 | [Independent boot and acceptance](docs/07-acceptance.md) | No CD/BootNext dependency; data checks recorded |
 | 7a | [Hardware display and apps](docs/07a-hardware-and-apps.md) | CPU/DIMMs, artwork, cache eligibility and app inventory checked independently |
 | 8 | [Updates and rollback](docs/08-updates.md) | Each proposed version tested before production use |
+
+For the full 5.2 → 6.1 experiment, the offline physical upgrade procedure, and release-specific pitfalls, see [QTS 6.1 upgrade and results](docs/11-qts61-upgrade.md).
 
 ## Repository contents
 
@@ -77,7 +89,7 @@ Run the offline tool tests with Python 3.9+: `python3 -m unittest discover -s te
 
 ![Recovered Qtier pool](assets/screenshots/qtier-native-en.jpg)
 
-The SSD RAID1 and HDD RAID5 tiers remain present after the hardware follow-up. See the [unattended-reboot results](docs/screenshots.md#qtier-after-default-reboot) for boot validation; no additional reboot was performed after the hardware changes.
+The SSD RAID1 and HDD RAID5 tiers remain present after the hardware follow-up. See the original [5.2 unattended-reboot results](docs/screenshots.md#qtier-after-default-reboot) and the later [6.1 physical recovery](docs/11-qts61-upgrade.md#1-what-actually-ran). These are separate validation milestones.
 
 ## What this does not promise
 

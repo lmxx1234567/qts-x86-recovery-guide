@@ -1,4 +1,17 @@
-# First-reader audit (2026-10-18)
+# First-reader audit
+
+## Two-release revision (2026-10-22)
+
+- One shared command walkthrough now selects stable/Beta variables once; firmware extraction no longer hard-codes the old X77 filename.
+- The official stable model feed advertises 5.2.11.3652; the guide explicitly distinguishes it from the runtime-tested 5.2.10 baseline. Beta6.1.0.3640 has separate VM and physical evidence.
+- The existing-installation branch starts from a consistent offline boot copy, preserves working boot identity/geometry, and spells out model/overlay changes, both firmware slots, virtual media, readback and reconnect acceptance.
+- Family selection and overlay preparation tools reject unknown identities/hooks and preserve unrelated model sections/archive entries. Both have offline regression tests.
+- The shared writer distinguishes a full-size clone from a smaller boot-span image, preventing a tail clear from destroying the end of a full-size candidate.
+- Repeated historical update-plan text is consolidated into one current update/rollback chapter; original case evidence remains dated and linked.
+- 58 offline tests passed, including shell-block parsing and local links. Screenshot crops were inspected for private identifiers. No production NAS configuration or storage was changed for this documentation revision; the newest stable firmware and this exact published walkthrough were not freshly boot-tested.
+
+## Original first-reader pass (2026-10-18)
+
 
 The initial guide explained the architecture but required unstated engineering knowledge at several steps. This revision adds an [ordered command walkthrough](10-command-walkthrough.md) and a regular-file-only partition helper.
 

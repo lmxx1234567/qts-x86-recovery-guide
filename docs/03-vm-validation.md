@@ -1,8 +1,11 @@
 # 3. Validate using disposable virtual disks
 
 <!-- stage-navigation -->
-[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
+[← Previous: Choose a release](02a-release-tracks.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
 <!-- /stage-navigation -->
+
+Use the selected stable/Beta variables from [release selection](02a-release-tracks.md). The later [6.1 experiment](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm) adds an actual native TS-X73A 5.2→6.1 update and cold start; it does not replace these common storage and boot gates.
+
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
@@ -38,5 +41,5 @@ The EFI directory acquired additional official files. Existing EFI executable an
 ---
 
 <!-- stage-navigation -->
-[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
+[← Previous: Choose a release](02a-release-tracks.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
 <!-- /stage-navigation -->

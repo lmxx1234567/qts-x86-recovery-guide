@@ -31,3 +31,7 @@
 The HAL error above is **historical and resolved** in the final case. Current acceptance showed eight successful per-disk HAL lookups and a recovered Qtier pool. Some historical screenshots predate that fix; their captions state their limited meaning.
 
 The later fixes above are documented in [hardware presentation and apps](07a-hardware-and-apps.md), including live verification, remaining limits and pending reboot verification.
+
+## After a 5.2 → 6.1 change
+
+Consult the [6.1 compatibility findings](11-qts61-upgrade.md#5-compatibility-findings-and-fixes) for hard-coded kernel paths, Python runtime selection, the 21-second HAL startup, stale sensor cache and the native CPU widget. A missing old SVG is cosmetic; a failed reverse disk lookup is a storage gate. Do not resolve either by repeatedly initializing the old disks.

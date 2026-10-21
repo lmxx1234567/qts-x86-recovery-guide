@@ -4,6 +4,11 @@
 [← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
 <!-- /stage-navigation -->
 
+## Current release scope
+
+The detailed repair history below is the original **5.2** follow-up. For the subsequent **6.1** native widget, Python/runtime, monitor startup timing, real sensor validation and persistence limits, use [the compatibility table](11-qts61-upgrade.md#5-compatibility-findings-and-fixes). A storage-only install does not require these optional customizations. The final physical sensor adapter was validated online; its final post-change cold boot remains pending. Do not interpret historical “not yet validated” entries below as denying the later VM upgrade result.
+
+
 After storage acceptance, check the hardware pages separately. A recovered pool does not prove correct temperature reporting, DIMM topology, enclosure artwork or SSD-cache eligibility. The observations below apply to **QTS 5.2.10.3577 on the case X570D4U-2L2T / Ryzen 5800X**, using a TS-877 profile.
 
 These fixes were verified in the running system on 2026-10-18 and saved into its boot overlay. **The revised overlay has not yet passed a reboot or cold-start test.** The earlier unattended reboot proves the original storage/boot setup, not these later changes. No cache was created and no application files were deleted.
@@ -127,7 +132,19 @@ The builder writes a new regular archive and review report; it never mounts or w
 
 **Validation:** 28 repository tests passed, including module isolation, unknown-input rejection, idempotence, concurrent-change/symlink protection, cron preservation, subprocess timeout, neutral-memory restoration, DIMM-cache rollback and preservation of early boot guards. QTS Python 2 live preflight passed all six modules. First application updated only the adapter import path and the existing metadata cron entry; a second pass reported all six `ok` with no changes. The metadata helper successfully validated/refreshed 817 application entries without installing packages. The unified overlay was installed and hash-verified with the previous overlay retained.
 
-**Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#proposed-support-for-routine-updates).
+**Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#persistent-adaptations-what-must-survive).
+
+### Monitor recovery correction (2026-10-19)
+
+The first observed restart exposed a recovery bug: the unified package and its hook survived, but `daemon_mgr` returned 1 after a monitor transition. The generic zero-only command wrapper raised before the next start command; the same sequence in rollback left the manager registration at `stop` and no `hal_daemon` process. Sensor files were rolled back and the UI's CPU value was a stale cache. This startup failure does not identify the cause of the preceding orderly shutdown.
+
+The monitor-specific controller now accepts exit 0 or 1 **only after** both the exact manager registration and the actual process list confirm the requested state. Other commands retain strict zero-exit handling; unexpected codes, duplicate/unknown registrations and unconfirmed transitions fail. A failed or timed-out stop attempts a recovery start before reporting the original error. Transaction rollback restores files before recovering the monitor. Command/action, return code and output are retained in diagnostic output.
+
+Startup waits for the native boot marker to clear, the manager and monitor to be running, and prerequisites to exist; it rechecks after a 30-second settling interval. It reopens its output log after native initialization so an early `/tmp` mount cannot hide the log. A bounded timeout still skips restoration. `--only-sensors` scopes an explicitly reviewed live repair without running the other modules. Preserve the failed marker and logs before an authorized retry; do not blindly clear blocked modules.
+
+Validation: **46 tests passed**, including confirmed/non-confirmed exit 1, exit 0 without a state change, unexpected exit codes, stop timeout/start recovery, rollback order, duplicate registration, exact process identity, startup readiness and archive preservation. On the case host, the live sensor-only repair restored the monitor, verified cache timestamps advancing over 20 seconds, and matched HAL motherboard/fan values to BMC readings. A sensor-only preflight then checked the installed mapping. These samples are not an ECO-mode power benchmark.
+
+[patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) updates only `qts-profile/mods/reconcile.py` and `qts-profile/mods/start` in an already unified archive; every other member's content and mode is retained. The case overlay was backed up, installed with boot-device identity/geometry and old/new hash checks, and read-back verified. No NAS reboot, BIOS/fan-policy change, MyQNAP repair or sudo persistence change was performed. **The corrected cold-start path has not yet been validated by a reboot.** Private host overlays, deployment scripts and backup/log data remain outside this public repository.
 
 The following earlier hardware-page capture shows the CPU, DIMMs and disk temperatures; it predates the later motherboard/fan dashboard repair:
 
@@ -176,7 +193,7 @@ Back up the actual target files and inspect any `model_0.svg` symlink first. Che
 |---|---|
 | <img src="../assets/screenshots/chassis-artwork-before.png" width="230" alt="Original chassis drawing with six large bays and two smaller bays"> | <img src="../assets/screenshots/chassis-artwork-after.png" width="230" alt="Patched chassis preview with eight large bays"> |
 
-The left crop is from the historical QTS smart-install welcome screen, before recovery; the right crop is from the later Storage & Snapshots disk preview. They show the two actual UI renderings, **not the same page or a new installer run**. The original screenshot was reused without reopening setup. The patch replaces presentation assets only; the accepted SATA/HAL bay mapping remains separate. The wider disk-preview screenshot below supplies the surrounding context. These crops exclude account, network and disk-identity details.
+The left crop is from the historical QTS smart-install welcome screen, before recovery; the right crop is from the later Storage & Snapshots disk preview. They show the two actual UI renderings, **not the same page or a new installer run**. The original screenshot was reused without reopening setup. The patch replaces presentation assets only; the accepted SATA/HAL bay mapping remains separate. The wider disk-preview screenshot below supplies the surrounding context.
 
 ![All eight disks in Storage & Snapshots](../assets/screenshots/eight-disks-native-en.jpg)
 

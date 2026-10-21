@@ -2,7 +2,7 @@
 
 This fills the operational gaps between the conceptual chapters. Run it in order, reading each gate. Commands target a **disposable Linux x86-64 build machine**, then a **maintenance boot on the destination NAS**. Do not paste the entire page into a shell. Commands in different sections run on different machines.
 
-The complete example is the observed X77 DOM layout. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. This command transcription and the new image helper have offline tests; the whole sequence has **not** been freshly rerun on physical hardware. The earlier installation/VM results are described separately in the case study.
+Both release tracks use this one walkthrough. First choose a track in [Release selection](02a-release-tracks.md), then use its variables below. The complete example uses the observed X77-derived DOM layout; the loader archive name does not select the QTS firmware family. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. This command transcription and the new image helper have offline tests; the whole sequence has **not** been freshly rerun on physical hardware. The earlier installation/VM results are described separately in the case study.
 
 ## 1. Build machine and directory layout
 
@@ -23,14 +23,43 @@ All following build commands run from this repository root. `private/` is ignore
 
 Download the selected official QNAP firmware ZIP, SystemRescue ISO and vendor checksum/signature files through their official sites. Obtain the community base loader separately through the provenance links in [sources](sources.md). Retain the download URL and hash locally. Do not use an unknown loader on original disks just because it has the same filename.
 
-For the historical version, the official package URL was:
+## 1a. Choose exactly one firmware track
+
+Use one block, in the same Bash session as the following steps. The stable example is the newest official 5.2 release found in the model-specific feed on **2026-10-22**; it is newer than our boot-tested 5.2.10 baseline. Recheck the [release selection page](02a-release-tracks.md) for validation limits and current-download instructions.
+
+**Track A — QTS 5.2 stable (TS-X77):**
 
 ```bash
-curl --fail --location --output private/input/TS-X77_20260731-5.2.10.3577.zip \
-  https://download.qnap.com/Storage/TS-X77/TS-X77_20260731-5.2.10.3577.zip
-sha256sum private/input/* > private/downloads.sha256
-wc -c private/input/*
+FW_FAMILY=TS-X77
+FW_BUILD=20261014
+FW_VERSION=5.2.11.3652
+MODEL_TRACK=x77
 ```
+
+**Track B — QTS 6.1 Public Beta (TS-X73A):**
+
+```bash
+FW_FAMILY=TS-X73A
+FW_BUILD=20261007
+FW_VERSION=6.1.0.3640
+MODEL_TRACK=x73a
+```
+
+Now run the shared download block:
+
+```bash
+FW_STEM="${FW_FAMILY}_${FW_BUILD}-${FW_VERSION}"
+FW_URL="https://download.qnap.com/Storage/${FW_FAMILY}/${FW_STEM}.zip"
+printf 'Family=%s Version=%s Build=%s Profile=%s\n' "$FW_FAMILY" "$FW_VERSION" "$FW_BUILD" "$MODEL_TRACK"
+curl --fail --location --output "private/input/$FW_STEM.zip" "$FW_URL"
+unzip -t "private/input/$FW_STEM.zip"
+printf 'FW_FAMILY=%s\nFW_BUILD=%s\nFW_VERSION=%s\nMODEL_TRACK=%s\nFW_STEM=%s\nFW_URL=%s\n' \
+  "$FW_FAMILY" "$FW_BUILD" "$FW_VERSION" "$MODEL_TRACK" "$FW_STEM" "$FW_URL" > private/release.env
+sha256sum "private/input/$FW_STEM.zip" > private/downloads.sha256
+wc -c "private/input/$FW_STEM.zip"
+```
+
+Keep this shell open, or inspect and `source private/release.env` when returning. Use a separate checkout/work directory for each track; do not combine unpacked payloads. For the tested 5.2-to-6.1 **VM update** route, build TS-X73A 5.2.10.3577 / 20260731 with `MODEL_TRACK=x73a` first; see [the update experiment](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm). A fresh Beta installation can start directly from the Beta block.
 
 A locally computed hash is an identity record, not authentication. Use the publisher's signature/checksum verification instructions too. If the historical package is unavailable, do not silently substitute another family/build: restart the version-validation gate.
 
@@ -59,10 +88,10 @@ if s.count(old)!=1: raise SystemExit('Source differs: review before adapting')
 Path('private/pc1-local.c').write_text(s.replace(old,'long filesize, encrypted_len = 0, block_size;'))
 PY
 cc -O2 -fwrapv -fsigned-char -o private/pc1 private/pc1-local.c
-unzip -l private/input/TS-X77_20260731-5.2.10.3577.zip
-unzip -n private/input/TS-X77_20260731-5.2.10.3577.zip -d private/unpacked
+unzip -l "private/input/$FW_STEM.zip"
+unzip -n "private/input/$FW_STEM.zip" -d private/unpacked
 private/pc1 d QNAPNASVERSION4 \
-  private/unpacked/TS-X77_20260731-5.2.10.3577.img private/firmware.tgz
+  "private/unpacked/$FW_STEM.img" private/firmware.tgz
 ```
 
 The extractor's exit code alone is insufficient (the examined `main` did not propagate every decryption error). Check the reported model/version and validate the decompressed archive. Some historical packages had trailing data; do not accept a corrupt compressed stream by ignoring all extraction errors.
@@ -141,12 +170,13 @@ If `::/grub/grub.cfg` is absent, inspect the actual base loader. Do not install 
 
 ## 4. Make separate VM and physical profiles
 
-Start with the complete [VM case profile](../templates/case-vm-model.conf) for the VM topology below, or the [physical case profile](../templates/case-x570-model.conf) only as a structure reference for hardware adaptation. The incomplete generic model template is **not directly bootable**.
+Start with the complete [VM case profile](../templates/case-vm-model.conf) for the VM topology below, or the [physical case profile](../templates/case-x570-model.conf) only as a structure reference for hardware adaptation. Both can be converted to the selected family by the command below; copying a full vendor model would discard your actual controller/bay map. The incomplete generic model template is **not directly bootable**.
 
 For the lab build:
 
 ```bash
-cp templates/case-vm-model.conf private/model.conf
+python3 tools/select_model.py --input templates/case-vm-model.conf \
+  --track "$MODEL_TRACK" --output private/model.conf
 cp templates/init.example private/init
 python3 - <<'PY'
 from pathlib import Path
@@ -162,6 +192,8 @@ sh -n private/init
 python3 tools/pack_overlay.py --model private/model.conf --init private/init --output private/profile.cpio.gz
 python3 tools/pack_overlay.py --model private/model.conf --init templates/diagnostic-init.example --output private/diagnostic.cpio.gz
 ```
+
+The selector changes only the reviewed family identity/capability fields; it preserves all boot, bay, network and memory sections. It does not discover hardware or approve compatibility. Before packing a physical overlay, use the same selector on **your reviewed physical model**, then verify every protected section.
 
 For the physical build, repeat in a fresh private work directory with the **real boot SSD serial and 512-byte-sector count** from rescue inventory, and the verified real controller/network/bay profile. Do not write the VM-profile image to the NAS. Include each required platform CAP/network field; copying only `[System Disk]` is insufficient. See [mapping](05-bay-mapping.md). Physical port mappings are established by hardware evidence, not a universal conversion from `ataN`.
 
@@ -273,7 +305,11 @@ qemu-system-x86_64 -machine pc,accel=kvm -cpu host -smp 2 -m 8192 \
 
 No physical passthrough, direct kernel boot, public VNC listener or autostart is used. Run the graphical console locally on the build host; when accessing a remote build host, use its authorized console/SSH tunnel rather than exposing the forwarded ports. `/dev/kvm` access is a host prerequisite. If KVM is unavailable, resolve virtualization access or explicitly test a different accelerator; don't count an unbooted VM as passed.
 
+If you are testing the native update and need outbound download access, use an already-downloaded package transferred through an authorized host-local channel. `restrict=on` deliberately prevents guest Internet access; it cannot validate online update discovery. Keep this isolation for the offline test.
+
 Run diagnostic first. It stops indefinitely; power off the disposable VM through its host controls after capturing output, then start again and select normal QTS. Open `http://127.0.0.1:18080` **on the build host**. Initialize only the new SATA disk; verify the 64 GiB NVMe is absent from data choices. Follow the wizard, create a small test volume using the disposable SATA device, record a test file, and cold-boot. Update through QTS **Control Panel → System → Firmware Update → Manual Installation**, selecting the exact official update package supported by that UI. Record completion and run the same cold-boot checks. If an older-to-newer test is required, build the older boot image first; booting only the new version does not test an upgrade.
+
+For 6.1, compare `uname -r`, DOM tables, firmware-slot files and sample hashes before/after using [the release-specific update checks](11-qts61-upgrade.md). Do not count a newly built 6.1 image as a native updater test.
 
 For consistent checkpoints, shut the VM down fully and confirm the QEMU process has exited before copying all state into a newly named checkpoint directory:
 
@@ -288,7 +324,7 @@ Save another checkpoint after initialization and after the verified update. Neve
 
 ## 7. Build the physical candidate and payload ISO
 
-Create a separate checkout (for example, clone this repository into `qts-physical-build`), enter it, create the section-1 `private/` directories, and copy the previously reviewed `base.img` plus extracted `fw/` files there. Repeat sections 3–5 with the physical boot serial, size, full profile and tested firmware. Replace the lab profile values in section 4 rather than executing its lab substitution unchanged. Retain the VM candidate separately. Name the final **physical** image `qts-boot.img` only after readback verification. Package it without inventing a bootable ISO:
+Create a separate checkout (for example, clone this repository into `qts-physical-build`), enter it, create the section-1 `private/` directories, and copy the previously reviewed `base.img`, `release.env` and extracted `fw/` files there. Inspect and source `private/release.env` in the new Bash session. Ensure its family matches the physical model you are preparing. Repeat sections 3–5 with the physical boot serial, size, full profile and tested firmware. Replace the lab profile values in section 4 rather than executing its lab substitution unchanged. Retain the VM candidate separately. Name the final **physical** image `qts-boot.img` only after readback verification. Package it without inventing a bootable ISO:
 
 ```bash
 mkdir -p private/payload
@@ -299,6 +335,8 @@ sha256sum private/qts-payload.iso
 ```
 
 This ISO is a **data disc**. First boot SystemRescue ISO in UEFI mode with `copytoram checksum nomdlvm ar_disable`; confirm rescue is loaded in RAM, then use BMC virtual media to replace the ISO with `qts-payload.iso`. Inspect `lsblk -o NAME,TYPE,LABEL,SIZE,MOUNTPOINTS` to find the virtual CD. Mount its actual device read-only, e.g. `sudo mount -o ro /dev/sr0 /mnt` if inspection identified sr0. Then `(cd /mnt && sha256sum -c SHA256SUMS)`. Do not assume the BMC preserved media attachment after a session expiry.
+
+Already running custom QTS? Before using the destructive clean-install writer below, follow [the existing-installation branch](11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation). That branch preserves your existing EFI, partition geometry and boot configuration by working from an offline backup.
 
 ## 8. Write the physical boot SSD (destructive, explicit target)
 
@@ -345,11 +383,13 @@ read -r CONFIRM_SERIAL
 test "$CONFIRM_SERIAL" = "$EXPECTED_SERIAL" || exit 1
 # Recheck that the identity link has not changed since inspection.
 test "$(readlink -f "$BOOT_ID")" = "$BOOT_DEV" || exit 1
-# Clear stale backup-GPT/signature bytes only at this erasable target's tail.
-# The image is smaller than the SSD in this design; enforce a non-overlapping tail.
-test "$BOOT_BYTES" -gt "$((IMAGE_BYTES + 1048576))" || exit 1
+# A full-size offline-clone candidate already contains the target tail.
+# Only a smaller image needs stale tail signatures cleared, outside its range.
 test "$((BOOT_BYTES % 512))" -eq 0 || exit 1
-dd if=/dev/zero of="$BOOT_DEV" bs=512 seek="$((BOOT_BYTES / 512 - 2048))" count=2048 conv=notrunc,fsync status=progress || exit 1
+if test "$IMAGE_BYTES" -lt "$BOOT_BYTES"; then
+  test "$BOOT_BYTES" -gt "$((IMAGE_BYTES + 1048576))" || exit 1
+  dd if=/dev/zero of="$BOOT_DEV" bs=512 seek="$((BOOT_BYTES / 512 - 2048))" count=2048 conv=notrunc,fsync status=progress || exit 1
+fi
 dd if="$IMAGE" of="$BOOT_DEV" bs=4M conv=notrunc,fsync status=progress || exit 1
 sync
 # Compare exactly the written image length; the unused SSD tail is not in the image.
