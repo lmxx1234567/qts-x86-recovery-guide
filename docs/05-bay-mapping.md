@@ -47,6 +47,17 @@ done
 
 Match block and sg devices by the resolved SCSI-device path. The enclosing PCI controller path (ending in the controller BDF) is the `DEV_PATH` candidate; do not paste the full `/ata.../host.../target...` leaf as if it were the controller. Record the native path before deciding the controller-relative port. Test candidate ports in diagnostic-only boot with known disk identities; a guessed `ataN - 1` rule is not evidence. Map the NIC's PCI address separately to avoid confusing a disk mapping success with network support.
 
+## Turn the inventory into a tested profile
+
+1. Copy [the bay worksheet](../templates/bay-map.example.csv) into your private records. Enter the physical bay, disk model and full serial/WWN from labels and inventory. Keep uncertain assignments explicitly marked; capacity alone cannot distinguish identical drives.
+2. Match each disk's block path to its `sg` path using the resolved sysfs device path. Record the enclosing controller PCI address and its full path. Preserve this evidence outside the NAS.
+3. Edit a private copy of the complete physical profile. Change each `[System Disk N]` entry's controller/path/port and slot label according to that evidence. Preserve required platform and network fields; do not replace the whole file with eight disk stanzas. `N` is your intended QTS slot, not an `sgN` suffix.
+4. Pack a new diagnostic overlay in a fresh build directory, install it through the reviewed [image assembly process](10-command-walkthrough.md#5-assemble-firmware-slots-support-and-grub), and read it back. During this pre-migration phase, rewriting the dedicated boot SSD requires repeating chapter 4's identity/readback checks. Do not improvise writes to data members. After recovery, preserve the accepted boot image and treat changes as maintenance with a rollback plan.
+5. Boot diagnostic, compare the scan against the worksheet, then inspect every per-disk query. If any disk is missing, duplicated, assigned to the wrong slot, or returns an error, correct the profile and repeat. Do not advance because the web installer happens to show disks.
+6. For an empty bay, shut down, connect a known disposable disk there, and repeat diagnostic only. Record its identity and result, then remove it while powered off. Do not hot-plug unless that hardware path has separately been validated.
+
+**Exit condition:** every populated bay has an unambiguous identity and successful reverse lookup; empty bays are either tested or explicitly pending. Retain the accepted profile and console log together. Changing cabling, PCI cards or BIOS settings requires rechecking this map.
+
 ## The historical failure and its fix
 
 The scan listed all eight disks in the desired order, with correct model and serial, but individual queries returned `ret=-1`, `port_id=0`. The installer later showed missing disks. Therefore the initial scan-only milestone was **not** acceptance.

@@ -97,6 +97,6 @@ One successful host is not a hardware compatibility list. Driver availability, H
 
 For supported appliance-to-appliance migration, check [QNAP's migration compatibility tool](https://www.qnap.com/en/nas-migration). For uncertain or damaged pools, prefer recovering files to another device over making the pool boot in place.
 
-See the [first-reader audit](docs/first-reader-audit.md) for what the command walkthrough was checked against and what still requires hardware validation.
+The [walkthrough usage notes](docs/10-command-walkthrough.md#how-to-use-this-walkthrough) distinguish offline checks from the VM and physical validation you must perform. Hardware display and app customization in stage 7a are optional follow-up work after recovering and exporting data.
 
 Contributions with reproducible, sanitized results are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [sources](docs/sources.md).

@@ -50,6 +50,12 @@ The observed 6.1 Beta appeared in the official `QTS_FW_5.2.0_beta.xml` feed. Thi
 
 The public optional helpers are reference tooling, not a universal board adapter. A minimal boot/storage candidate can disable the recognized optional startup hook with `prepare_release_overlay.py` while retaining the boot guards. Re-enable only the modules tested for your hardware and release. Keep unknown binary/UI structures unchanged. A version number is evidence, not proof of compatibility; removing a version-prefix gate without retaining identity and semantic checks is not an adaptation strategy.
 
+## Retained monitor and thermal reference code
+
+The earlier 5.2 investigation found native sensor readers contending for direct KCS access. The verified correction retained exclusive access, serialized/bounded transactions and fresh-reading checks. The source and regression tests remain in `tools/qts-mods` and `tests`; the full chronological failed-attempt log is not required to install either release.
+
+`thermal.py` and `patch_thermal_overlay.py` retain a **separately invoked, host-gated CPU90 case policy** from that work. They are not called by the default public startup hook, and are not a universal CPU limit. The later operator-selected CPU91 change and one-off high-load activation are described in the 6.1 report, without installing that policy for readers. Do not weaken a temperature guard or disable thermal protection to make a test pass. Public helper tests are offline; the exact public package still needs its own cold-boot test on your board.
+
 ## Rollback
 
 Retain an off-device copy of the original firmware payload, EFI/configuration, complete reviewed overlay, partition geometry and verified boot backup. Neither the other firmware slot nor a renamed archive is an independent backup.

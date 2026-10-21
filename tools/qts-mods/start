@@ -1,6 +1,6 @@
 #!/bin/sh
 # Wait for native initialization and a stable live monitor before changing mappings.
-PATH=/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin
 export PATH
 choose_runtime() {
  for candidate in /usr/local/bin/python3 /usr/bin/python3 /mnt/ext/opt/Python3/bin/python3 /usr/local/bin/python /mnt/ext/opt/Python/bin/python; do

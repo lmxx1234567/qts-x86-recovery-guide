@@ -13,6 +13,8 @@ After storage acceptance, check the hardware pages separately. A recovered pool 
 
 These fixes were verified in the running system on 2026-10-18 and saved into its boot overlay. **The revised overlay has not yet passed a reboot or cold-start test.** The earlier unattended reboot proves the original storage/boot setup, not these later changes. No cache was created and no application files were deleted.
 
+The 2026-10-20 follow-up repaired contention between native temperature/fan readers and revalidated continuous real values. That historical CPU90 policy was separately enabled on the case host. The later [6.1 follow-up](11-qts61-upgrade.md#5-compatibility-findings-and-fixes) records the final monitoring result and operator-selected CPU91 limit; neither threshold is a general hardware recommendation.
+
 ## CPU, motherboard and fan readings
 
 Two separate problems produced a dashboard with only a zero-valued system-temperature row:
@@ -47,7 +49,7 @@ SMBIOS type 38 identified a KCS interface at I/O address `0xca2`, with successiv
 
 These are sampled values, not constants. BMC fan readings use a factor of 100 on this host, matching QTS's IPMI fan interpretation. Sensor numbers, scaling, labels and KCS addresses must be re-established on another board or after relevant firmware changes.
 
-A small local Python adapter implements only the sensor-read subset needed by QTS. Its `ipmitool` entry point accepts `raw 0x04 0x2d` for the four explicitly allowed sensor IDs (49, 52, 97, 98); it is **not a general-purpose ipmitool**. It does not change PWM, fan mode, thresholds or BMC settings. It uses a lock, a bounded transaction timeout and refuses a busy KCS transaction or a newly present native kernel IPMI interface. Direct KCS access is specific to this verified host; do not run an independent kernel/userspace KCS driver concurrently.
+A small local Python adapter implements only the sensor-read subset needed by QTS. Its `ipmitool` entry point accepts `raw 0x04 0x2d` for the four explicitly allowed sensor IDs (49, 52, 97, 98); it is **not a general-purpose ipmitool**. It does not change PWM, fan mode, thresholds or BMC settings. It waits up to 0.5 seconds for the shared process lock so concurrent native temperature and fan readers can serialize. Each hardware transaction retains its three-second limit and refuses a busy KCS state or a newly present native kernel IPMI interface. It never resets KCS to recover a timeout. Direct KCS access is specific to this verified host; do not run an independent kernel/userspace KCS driver concurrently.
 
 The resulting live sensor fields are:
 
@@ -133,6 +135,18 @@ The builder writes a new regular archive and review report; it never mounts or w
 **Validation:** 28 repository tests passed, including module isolation, unknown-input rejection, idempotence, concurrent-change/symlink protection, cron preservation, subprocess timeout, neutral-memory restoration, DIMM-cache rollback and preservation of early boot guards. QTS Python 2 live preflight passed all six modules. First application updated only the adapter import path and the existing metadata cron entry; a second pass reported all six `ok` with no changes. The metadata helper successfully validated/refreshed 817 application entries without installing packages. The unified overlay was installed and hash-verified with the previous overlay retained.
 
 **Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#persistent-adaptations-what-must-survive).
+
+### Monitor recovery correction (2026-10-19)
+
+The first observed restart exposed a recovery bug: the unified package and its hook survived, but `daemon_mgr` returned 1 after a monitor transition. The generic zero-only command wrapper raised before the next start command; the same sequence in rollback left the manager registration at `stop` and no `hal_daemon` process. Sensor files were rolled back and the UI's CPU value was a stale cache. This startup failure does not identify the cause of the preceding orderly shutdown.
+
+The monitor-specific controller now accepts exit 0 or 1 **only after** both the exact manager registration and the actual process list confirm the requested state. Other commands retain strict zero-exit handling; unexpected codes, duplicate/unknown registrations and unconfirmed transitions fail. A failed or timed-out stop attempts a recovery start before reporting the original error. Transaction rollback restores files before recovering the monitor. Command/action, return code and output are retained in diagnostic output.
+
+Startup waits for the native boot marker to clear, the manager and monitor to be running, and prerequisites to exist; it rechecks after a 30-second settling interval. It reopens its output log after native initialization so an early `/tmp` mount cannot hide the log. A bounded timeout still skips restoration. `--only-sensors` scopes an explicitly reviewed live repair without running the other modules. Preserve the failed marker and logs before an authorized retry; do not blindly clear blocked modules.
+
+Validation: **46 tests passed**, including confirmed/non-confirmed exit 1, exit 0 without a state change, unexpected exit codes, stop timeout/start recovery, rollback order, duplicate registration, exact process identity, startup readiness and archive preservation. On the case host, the live sensor-only repair restored the monitor, verified cache timestamps advancing over 20 seconds, and matched HAL motherboard/fan values to BMC readings. A sensor-only preflight then checked the installed mapping. These samples are not an ECO-mode power benchmark.
+
+[patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) updates only `qts-profile/mods/reconcile.py` and `qts-profile/mods/start` in an already unified archive; every other member's content and mode is retained. The case overlay was backed up, installed with boot-device identity/geometry and old/new hash checks, and read-back verified. No NAS reboot, BIOS/fan-policy change, MyQNAP repair or sudo persistence change was performed. **The corrected cold-start path has not yet been validated by a reboot.** Private host overlays, deployment scripts and backup/log data remain outside this public repository.
 
 ### Monitor recovery correction (2026-10-19)
 

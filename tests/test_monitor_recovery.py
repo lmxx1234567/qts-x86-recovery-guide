@@ -5,12 +5,36 @@ PKG=Path(__file__).resolve().parents[1]/'tools'/'qts-mods'
 spec=importlib.util.spec_from_file_location('monitor_mods',PKG/'reconcile.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class Monitor(unittest.TestCase):
+ def test_timeout_keeps_output_and_full_action(self):
+  with self.assertRaises(m.CommandTimeout) as caught:
+   m.run_result([sys.executable,'-u','-c','import time; print("diagnostic"); time.sleep(2)'],.1,kill_group=False)
+  self.assertIn('diagnostic',caught.exception.output)
+  self.assertIn('time.sleep',str(caught.exception))
+ def test_monitor_timeout_logs_state_and_never_succeeds(self):
+  error=m.CommandTimeout(['daemon_mgr','hal_daemon','start'],20,'python missing')
+  with patch.object(m,'monitor_state',return_value=('start',[9])),patch.object(m,'run_result',side_effect=error) as run,patch.object(m,'monitor_event') as event:
+   with self.assertRaises(m.CommandTimeout):m.monitor_action('start')
+   self.assertFalse(run.call_args.kwargs['kill_group'])
+   self.assertEqual([c.args[1] for c in event.call_args_list],['begin','timeout'])
+   self.assertEqual(event.call_args.kwargs['output'],'python missing')
+ def test_failed_stop_does_not_restart_already_running_monitor(self):
+  with patch.object(m,'monitor_matches',side_effect=[False,True]),patch.object(m,'monitor_action',side_effect=m.Skip('timeout')) as action:
+   with self.assertRaisesRegex(m.Skip,'timeout'):m.restart_monitor()
+   self.assertEqual([c.args[0] for c in action.call_args_list],['stop'])
+ def test_monitor_timeout_does_not_kill_descendant_group(self):
+  from unittest.mock import MagicMock
+  process=MagicMock();process.poll.return_value=None;process.pid=999999
+  with patch.object(m.subprocess,'Popen',return_value=process) as popen,patch.object(m.os,'killpg') as killpg:
+   with self.assertRaises(m.CommandTimeout):m.run_result(['client'],0,kill_group=False)
+   process.kill.assert_called_once();killpg.assert_not_called();process.wait.assert_called_once()
+   self.assertTrue(popen.call_args.kwargs['close_fds'])
+ def test_startup_path_includes_verified_python_directory(self):
+  self.assertIn('/usr/local/bin',(PKG/'start').read_text().split('PATH=',1)[1].splitlines()[0])
  def test_generic_exit_one_still_fails(self):
   with self.assertRaises(m.Skip):m.run([sys.executable,'-c','raise SystemExit(1)'])
  def test_stop_one_confirmed_then_start(self):
   state={'action':'start','pids':[5]};calls=[]
-  def command(args,timeout,**kwargs):
-   self.assertFalse(kwargs["kill_group"])
+  def command(args,timeout,kill_group=True):
    calls.append(args[2]);state.update(action=args[2],pids=[] if args[2]=='stop' else [6]);return 1,'accepted'
   with patch.object(m,'monitor_state',side_effect=lambda:(state['action'],state['pids'])),patch.object(m,'run_result',side_effect=command):m.restart_monitor()
   self.assertEqual(calls,['stop','start'])
@@ -64,6 +88,6 @@ class Monitor(unittest.TestCase):
   self.assertLess(s.index('sleep 30'),s.rindex('--startup-ready'))
   self.assertIn('exec > /tmp/qts-mods-start.log 2>&1',s)
  def test_only_sensors_does_not_run_other_modules(self):
-  with tempfile.TemporaryDirectory() as d,patch.object(m,'BASE',d),patch.object(m,'STATE',d),patch.object(m.os,'geteuid',return_value=0),patch.object(m,'private_dir'),patch.object(m.Context,'gate'),patch.object(m.Context,'sensors',return_value={'state':'ok'}) as sensors,patch.object(m.Context,'myqnap') as other,patch.object(m,'notify'),patch.object(sys,'argv',['reconcile.py','--only-sensors']):
+  with tempfile.TemporaryDirectory() as d,patch.object(m,'BASE',d),patch.object(m,'STATE',d),patch.object(m.os,'geteuid',return_value=0),patch.object(m,'private_dir'),patch.object(m.Context,'gate'),patch.object(m.Context,'sensors',return_value={'state':'ok'}) as sensors,patch.object(m.Context,'myqnap') as other,patch.object(m,'notify'),patch.object(sys,'argv',['reconcile.py','--only-sensors']),patch.object(m,'run_sensors',side_effect=lambda c:c.sensors()):
    (Path(d)/'profile.json').write_text('{}');self.assertEqual(m.main(),0);sensors.assert_called_once();other.assert_not_called()
 if __name__=='__main__':unittest.main()

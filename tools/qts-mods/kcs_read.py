@@ -1,18 +1,32 @@
 #!/usr/local/bin/python
 # Read-only IPMI commands over this board's SMBIOS-declared KCS port.
 from __future__ import print_function
-import os,sys,time,fcntl
+import os,sys,time,fcntl,errno
 BASE=0xca2
 ALLOWED={(6,1),(4,0x2d),(4,0x23)}
+def monotonic():
+    if hasattr(time,'monotonic'):return time.monotonic()
+    with open('/proc/uptime') as f:return float(f.read().split()[0])
+def acquire_lock(lock):
+    # HAL temperature and fan threads can start in the same sampling cycle.
+    # Serialize briefly without touching a busy hardware transaction or resetting it.
+    deadline=monotonic()+0.5
+    while True:
+        try:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);return
+        except IOError as error:
+            if error.errno not in (errno.EAGAIN,errno.EACCES):raise
+            if monotonic()>=deadline:raise RuntimeError('KCS reader busy after bounded lock wait')
+            time.sleep(min(.01,max(0,deadline-monotonic())))
 def command(netfn,cmd,args):
     if (netfn,cmd) not in ALLOWED: raise ValueError('Read-only command allowlist')
     if os.path.exists('/dev/ipmi0') or os.path.exists('/dev/ipmi/0'):
         raise RuntimeError('Kernel IPMI interface detected; direct KCS disabled')
     lock=os.open('/var/lock/qts-sensor-kcs.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
     try:
-        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-    except IOError:
-        os.close(lock);raise RuntimeError('KCS reader busy; try next sample')
+        acquire_lock(lock)
+    except Exception:
+        os.close(lock);raise
     fd=os.open('/dev/port',os.O_RDWR)
     deadline=time.time()+3
     def rd(port):
