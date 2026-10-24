@@ -4,16 +4,11 @@
 [← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
 <!-- /stage-navigation -->
 
-## Current release scope
+## Before you start
 
-The detailed repair history below is the original **5.2** follow-up. For the subsequent **6.1** native widget, Python/runtime, monitor startup timing, real sensor validation and persistence limits, use [the compatibility table](11-qts61-upgrade.md#5-compatibility-findings-and-fixes). A storage-only install does not require these optional customizations. The final physical sensor adapter was validated online; its final post-change cold boot remains pending. Do not interpret historical “not yet validated” entries below as denying the later VM upgrade result.
+Complete storage recovery and export important data before optional hardware changes. A healthy pool does not verify sensors, DIMM topology, graphics or app compatibility. Use an authorized maintenance session and preserve the accepted boot overlay and configuration off the NAS.
 
-
-After storage acceptance, check the hardware pages separately. A recovered pool does not prove correct temperature reporting, DIMM topology, enclosure artwork or SSD-cache eligibility. The observations below apply to **QTS 5.2.10.3577 on the case X570D4U-2L2T / Ryzen 5800X**, using a TS-877 profile.
-
-These fixes were verified in the running system on 2026-10-18 and saved into its boot overlay. **The revised overlay has not yet passed a reboot or cold-start test.** The earlier unattended reboot proves the original storage/boot setup, not these later changes. No cache was created and no application files were deleted.
-
-The 2026-10-20 follow-up repaired contention between native temperature/fan readers and revalidated continuous real values. That historical CPU90 policy was separately enabled on the case host. The later [6.1 follow-up](11-qts61-upgrade.md#5-compatibility-findings-and-fixes) records the final monitoring result and operator-selected CPU91 limit; neither threshold is a general hardware recommendation.
+The examples use the X570D4U-2L2T / Ryzen 5800X. The TS-877 examples describe QTS 5.2.10; for TS-873A / QTS 6.1, also apply the [release-specific checks](11-qts61-upgrade.md#5-compatibility-findings-and-fixes). The public profile is disabled by default and needs board-specific values. It does not discover those values for you.
 
 ## Custom enclosure previews
 
@@ -40,7 +35,7 @@ done
 
 The kernel exposes `k10temp` Tctl and Tccd1. CPU reporting uses QTS's existing `DTS:1` source, not a fabricated BMC replacement. Run `/sbin/get_cpu_temp` with appropriate privileges: an unprivileged zero did not establish a missing sensor. All eight SATA disks already provided their own temperatures; those sources were unchanged.
 
-### Case-specific BMC integration
+### Map real board sensors
 
 SMBIOS type 38 identified a KCS interface at I/O address `0xca2`, with successive-byte register spacing. Read-only BMC queries were compared with the BMC sensor page. The accepted mapping on this board was:
 
@@ -70,27 +65,21 @@ FAN_1 = I97
 FAN_2 = I98
 ```
 
-Preserve all unrelated model fields and disk mappings. QTS's `[Enclosure_0]` in `/etc/hal.conf` also needs matching `max_temp_num` and `max_fan_num` values. The monitoring daemon caches the model: changing the files or probing HAL alone does not prove that `/tmp/em/em_0.info` or the UI has updated. The current procedure may restart **only the hardware-monitor process**, through its standard `daemon_mgr` invocation, when those sensor settings change. It does not rescan storage or reboot the NAS. During diagnosis an unsupported `hal_daemon --help` invocation unexpectedly restarted the monitor; standard arguments were restored. Do not use daemon help probing as a read-only diagnostic.
+Preserve all unrelated model fields and disk mappings. QTS's `[Enclosure_0]` in `/etc/hal.conf` also needs matching `max_temp_num` and `max_fan_num` values. The monitoring daemon caches the model: changing the files or probing HAL alone does not prove that `/tmp/em/em_0.info` or the UI has updated. The current procedure may restart **only the hardware-monitor process**, through its standard `daemon_mgr` invocation, when those sensor settings change. It does not rescan storage or reboot the NAS. Do not probe `hal_daemon --help` as a read-only command: unsupported arguments can start or change the monitor.
 
 The dashboard fix changes the recognized CPU-row condition to require a positive native `cpuTempC` value and removes the model-specific hiding class for that row. It only patches uniquely recognized old/new snippets in `qos-core-widget.js`; an unfamiliar widget is rejected. Refresh the browser cache if it still displays the old widget. No vendor JavaScript or compiled firmware is redistributed here.
 
-### Dashboard before and after
+### Verify fresh readings
 
-These are actual QTS screenshots from 2026-10-18. The **before** crop comes from the original fault report; the **after** crop was captured from the running system after repair and unified-package deployment. Only the hardware panel is included: accounts, IP addresses, host names, browser tabs, shares and online-user rows are outside the crop. No readings were edited or generated. The original captures use different display scales.
+Compare the dashboard with native CPU output and the BMC sensor page. Confirm the monitor is running and `/tmp/em/em_0.info` changes over successive samples. A cached temperature or green status icon does not prove a working sensor. Preserve independent BMC fan management; the adapter reads sensors and does not control cooling.
 
-| Before repair | After repair |
-|---|---|
-| <img src="../assets/screenshots/dashboard-hardware-before.png" width="340" alt="Before repair: only System at 0 degrees, with no CPU or fan rows"> | <img src="../assets/screenshots/dashboard-hardware-after.png" width="340" alt="After repair: System 48 C, CPU 78 C, and fans at 1500 and 2400 RPM"> |
+The legacy CPU-widget patch is only for a recognized 5.2 structure. QTS 6.1 already supplies a native CPU widget; leave it intact. [Chinese UI examples](screenshots.zh-CN.md#温度与风扇) show the actual before/after panel.
 
-**What the Web UI patch changes:** the CPU row is no longer limited to the TS-X82 model family, and its model-specific hiding class is removed. The positive native CPU reading can therefore appear in the dashboard. **What the sensor integration changes:** the System row receives the motherboard reading, and two fan rows receive real BMC RPM values. The after image shows the combined result, not an isolated JavaScript-only experiment. Readings vary with load; the temperature change between captures is not a cooling benchmark. QTS truncates the Fahrenheit suffix in this narrow widget; the Celsius values and RPM remain visible.
+### Configure optional startup restoration
 
-This capture proves the running dashboard, not persistence through a reboot or firmware upgrade. The faulty zero-valued row also carried a green indicator, so that icon alone was not evidence of working telemetry.
+Use the optional package under `/qts-profile/mods` only after its individual modules pass preflight on your host. Source is in [tools/qts-mods](../tools/qts-mods/reconcile.py); [build_mod_overlay.py](../tools/build_mod_overlay.py) builds an overlay from a reviewed private base, host profile and locally obtained artwork. The package **does not install firmware, reboot the NAS, rebuild privilege rules, create caches or modify disk/pool mappings**.
 
-### Unified one-shot restoration package
-
-The final 2026-10-18 deployment replaces the sensor-only helper with a unified package under `/qts-profile/mods`. Source is in [tools/qts-mods](../tools/qts-mods/reconcile.py); [build_mod_overlay.py](../tools/build_mod_overlay.py) builds an overlay from a reviewed private base, host profile and locally obtained artwork. The package **does not install firmware, reboot the NAS, rebuild privilege rules, create caches or modify disk/pool mappings**.
-
-The boot entry waits at most ten minutes for prerequisites, waits 30 seconds for QTS startup to settle, performs one reconciliation pass and exits. There is no resident process or periodic mod watchdog. Only the already-existing six-hour MyQNAP metadata-refresh job remains scheduled, now pointing to the package's metadata-only helper.
+The boot entry uses a bounded prerequisite wait with a 30-second settling check, performs one reconciliation pass and exits. There is no resident process or periodic mod watchdog. If configured, the MyQNAP module updates only the recognized existing metadata-refresh job; leave that module disabled if you do not use this repository integration.
 
 | Module | Compatibility and recovery behavior |
 |---|---|
@@ -101,11 +90,11 @@ The boot entry waits at most ten minutes for prerequisites, waits 30 seconds for
 | Artwork | Accept known vendor/prior asset hashes and expected IDs. The original front has six `hd` IDs plus two `ssd` IDs; the replacement has eight `hd` IDs. Unknown/new artwork is preserved and reported rather than overwritten. |
 | MyQNAP index | Validate the local XML route, runtime dependencies and existing repository identity. Restore a missing known registration and replace/deduplicate only the known metadata cron entry, preserving unrelated jobs in both persistent and running crontabs. Fetch/validate a missing index when necessary; never install apps. |
 
-The global gate checks the configured host identity, supported QTS 5.2 family, protected boot/disk/network model sections and PCI paths. It checks firmware identity again before applying each module and rejects a version change during the same boot. The sensor-only package's five exact-binary hashes are no longer the sole compatibility criterion: symbols, bounded native calls and verified readings allow structurally compatible maintenance releases. This is still a **case-specific implementation**, particularly the fixed KCS address/sensor IDs and supported memory/cache layout; editing an example profile does not prove another board compatible.
+The global gate checks host identity, protected boot/disk/network sections and PCI paths, then rechecks firmware identity before each module. Compatibility is based on the module's inspected structures and runtime checks, not a blanket promise for a version family. Unknown inputs are skipped. Fixed KCS addresses, sensor IDs and DIMM/cache layouts still need board-specific validation; changing the example profile alone is insufficient.
 
 Each module backs up changed files in a root-only temporary directory, checks for concurrent changes and replaces files atomically. Verification failure rolls back its own changes, retains unrelated/concurrent changes, blocks that module for the rest of the boot and allows other modules to continue. DIMM rollback accounts for HAL's cache-population side effects. Sensor changes may restart only the hardware monitor; no whole-system restart is present.
 
-The builder preserves early boot identity/geometry guards, unrelated-OS exclusion and protected disk/network sections. It removes the old unguarded artwork launch and the old sensor-check launch. Optional memory and cache fields start with neutral defaults; the new modules restore them only after checks. The earlier native CPU source remains configured. A missing loader hook cannot be repaired by a program that never starts.
+The builder preserves early boot identity/geometry guards and protected disk/network sections. Review its output report: it replaces recognized legacy hooks and neutralizes optional memory/cache fields for checked restoration. Do not remove the existing boot guards or assume the runtime helper can repair a missing startup hook.
 
 One summarized QTS System notification uses the **`[QTS Mods]`** prefix and lists each module's restored/OK/skipped outcome. Warnings identify incompatible or failed modules. Identical outcomes are suppressed within a boot. MyQNAP refresh failures preserve the last valid index and report failure/recovery separately. Notification rules and external recipients are not changed.
 
@@ -115,13 +104,16 @@ One summarized QTS System notification uses the **`[QTS Mods]`** prefix and list
 /tmp/qts-mods/backups/          # Runtime rollback copies; lost at reboot
 ```
 
-On the adapted host:
+On an adapted host with the package already installed, choose an existing Python runtime after verifying its required modules. Python paths differ by QTS release:
 
 ```sh
+# Replace with the verified installed runtime path.
+QTS_PYTHON=/REPLACE/VERIFIED/python
+case "$QTS_PYTHON" in *REPLACE*) echo "Set the runtime path first"; exit 1;; esac
 # Preflight: do not apply mod changes or fetch a missing index.
-sudo /usr/local/bin/python /qts-profile/mods/reconcile.py --check
+sudo "$QTS_PYTHON" /qts-profile/mods/reconcile.py --check
 # Apply compatible modules once; no firmware installation or reboot.
-sudo /usr/local/bin/python /qts-profile/mods/reconcile.py
+sudo "$QTS_PYTHON" /qts-profile/mods/reconcile.py
 ```
 
 The [example profile](../tools/qts-mods/profile.example.json) is disabled and incomplete. Keep the real profile private: populate exact protected model sections, board identity, PCI paths, known adapter hashes, physical DIMM locators, artwork hashes/IDs and the existing repository/cron definition. Vendor SVGs, firmware images, private identity and ready-to-flash host overlays are not distributed here. Build only after reviewing those inputs:
@@ -134,39 +126,21 @@ python3 tools/build_mod_overlay.py \
   --output private/unified.cpio.gz
 ```
 
-The builder writes a new regular archive and review report; it never mounts or writes a boot device. For the case installation, the separate deployment step verified the dedicated boot SSD identity/geometry and old overlay hash, saved the prior overlay, then wrote and read-back-hashed the new file. Rollback requires the private backup and matching device checks; do not use the other firmware slot as an assumed rollback image.
+The builder writes a regular archive and review report; it never mounts or writes a boot device. Inspect the report, retain the old overlay off-device, and install through the identity, geometry and readback checks in [the build procedure](04-build-and-install.md). A file in `/tmp/qts-mods/backups/` is a runtime rollback copy, not a persistent backup.
 
-**Validation:** 28 repository tests passed, including module isolation, unknown-input rejection, idempotence, concurrent-change/symlink protection, cron preservation, subprocess timeout, neutral-memory restoration, DIMM-cache rollback and preservation of early boot guards. QTS Python 2 live preflight passed all six modules. First application updated only the adapter import path and the existing metadata cron entry; a second pass reported all six `ok` with no changes. The metadata helper successfully validated/refreshed 817 application entries without installing packages. The unified overlay was installed and hash-verified with the previous overlay retained.
+### Recover a failed monitoring module
 
-**Not yet validated:** a reboot/cold start or a real firmware upgrade using this package. The independent startup entry is tested in the running system; this does not establish the full next-boot path. Current arrays remain complete with the prior resync continuing. See the [update design and deployment boundary](08-updates.md#persistent-adaptations-what-must-survive).
+1. Read `/tmp/qts-mods/status.json` and `/tmp/qts-mods-start.log`. Preserve them before rebooting or retrying.
+2. Check the registered monitor, actual process and fresh sensor cache together. `daemon_mgr` exit 0 or 1 alone is insufficient; the helper requires the requested state to be confirmed.
+3. If a module is blocked after failure, inspect the cause and retained backup first. Do not clear failure markers or bypass compatibility checks merely to retry.
+4. For an explicitly scoped sensor repair, run the installed reconciler with `--only-sensors --check` first. Apply with `--only-sensors` only after the mismatch is understood. Other optional modules remain untouched.
+5. If updating an older unified archive, [patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) replaces only the monitor reconciler and startup entry while preserving other members. Inspect its `--help`, build a new regular file, and use the same overlay backup/readback procedure.
 
-### Monitor recovery correction (2026-10-19)
+The startup wait is bounded and skips unavailable prerequisites. Transaction failure restores that module's files before monitor recovery; unknown or concurrent changes are retained for review. If the monitor cannot recover, return to the accepted overlay and independent hardware monitoring rather than repeatedly restarting services.
 
-The first observed restart exposed a recovery bug: the unified package and its hook survived, but `daemon_mgr` returned 1 after a monitor transition. The generic zero-only command wrapper raised before the next start command; the same sequence in rollback left the manager registration at `stop` and no `hal_daemon` process. Sensor files were rolled back and the UI's CPU value was a stale cache. This startup failure does not identify the cause of the preceding orderly shutdown.
+![CPU, memory slots and SATA temperatures on QTS 5.2](../assets/screenshots/hardware-status-native-en.jpg)
 
-The monitor-specific controller now accepts exit 0 or 1 **only after** both the exact manager registration and the actual process list confirm the requested state. Other commands retain strict zero-exit handling; unexpected codes, duplicate/unknown registrations and unconfirmed transitions fail. A failed or timed-out stop attempts a recovery start before reporting the original error. Transaction rollback restores files before recovering the monitor. Command/action, return code and output are retained in diagnostic output.
-
-Startup waits for the native boot marker to clear, the manager and monitor to be running, and prerequisites to exist; it rechecks after a 30-second settling interval. It reopens its output log after native initialization so an early `/tmp` mount cannot hide the log. A bounded timeout still skips restoration. `--only-sensors` scopes an explicitly reviewed live repair without running the other modules. Preserve the failed marker and logs before an authorized retry; do not blindly clear blocked modules.
-
-Validation: **46 tests passed**, including confirmed/non-confirmed exit 1, exit 0 without a state change, unexpected exit codes, stop timeout/start recovery, rollback order, duplicate registration, exact process identity, startup readiness and archive preservation. On the case host, the live sensor-only repair restored the monitor, verified cache timestamps advancing over 20 seconds, and matched HAL motherboard/fan values to BMC readings. A sensor-only preflight then checked the installed mapping. These samples are not an ECO-mode power benchmark.
-
-[patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) updates only `qts-profile/mods/reconcile.py` and `qts-profile/mods/start` in an already unified archive; every other member's content and mode is retained. The case overlay was backed up, installed with boot-device identity/geometry and old/new hash checks, and read-back verified. No NAS reboot, BIOS/fan-policy change, MyQNAP repair or sudo persistence change was performed. **The corrected cold-start path has not yet been validated by a reboot.** Private host overlays, deployment scripts and backup/log data remain outside this public repository.
-
-### Monitor recovery correction (2026-10-19)
-
-The first observed restart exposed a recovery bug: the unified package and its hook survived, but `daemon_mgr` returned 1 after a monitor transition. The generic zero-only command wrapper raised before the next start command; the same sequence in rollback left the manager registration at `stop` and no `hal_daemon` process. Sensor files were rolled back and the UI's CPU value was a stale cache. This startup failure does not identify the cause of the preceding orderly shutdown.
-
-The monitor-specific controller now accepts exit 0 or 1 **only after** both the exact manager registration and the actual process list confirm the requested state. Other commands retain strict zero-exit handling; unexpected codes, duplicate/unknown registrations and unconfirmed transitions fail. A failed or timed-out stop attempts a recovery start before reporting the original error. Transaction rollback restores files before recovering the monitor. Command/action, return code and output are retained in diagnostic output.
-
-Startup waits for the native boot marker to clear, the manager and monitor to be running, and prerequisites to exist; it rechecks after a 30-second settling interval. It reopens its output log after native initialization so an early `/tmp` mount cannot hide the log. A bounded timeout still skips restoration. `--only-sensors` scopes an explicitly reviewed live repair without running the other modules. Preserve the failed marker and logs before an authorized retry; do not blindly clear blocked modules.
-
-Validation: **46 tests passed**, including confirmed/non-confirmed exit 1, exit 0 without a state change, unexpected exit codes, stop timeout/start recovery, rollback order, duplicate registration, exact process identity, startup readiness and archive preservation. On the case host, the live sensor-only repair restored the monitor, verified cache timestamps advancing over 20 seconds, and matched HAL motherboard/fan values to BMC readings. A sensor-only preflight then checked the installed mapping. These samples are not an ECO-mode power benchmark.
-
-[patch_monitor_overlay.py](../tools/patch_monitor_overlay.py) updates only `qts-profile/mods/reconcile.py` and `qts-profile/mods/start` in an already unified archive; every other member's content and mode is retained. The case overlay was backed up, installed with boot-device identity/geometry and old/new hash checks, and read-back verified. No NAS reboot, BIOS/fan-policy change, MyQNAP repair or sudo persistence change was performed. **The corrected cold-start path has not yet been validated by a reboot.** Private host overlays, deployment scripts and backup/log data remain outside this public repository.
-
-The following earlier hardware-page capture shows the CPU, DIMMs and disk temperatures; it predates the later motherboard/fan dashboard repair:
-
-![CPU, 64 GB memory, four DIMM slots and eight disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
+*This English capture predates board-sensor integration. Its System temperature field does not describe the later adapter's capability.*
 
 ## Memory: 0 B in QTS while Linux sees 64 GB
 
@@ -191,9 +165,9 @@ Back up `/etc/platform.conf` before invalidating only stale `[DIMM n]` sections;
 
 ## Eight large bays: artwork is separate from disk mapping
 
-The TS-877 front image depicts six large bays and two smaller bays. Our eight disks were correctly enumerated as ordinary SATA bays, but two highlights did not match that drawing. Changing the entire model profile merely to obtain another picture could change unrelated hardware behavior.
+The TS-877 front image depicts six large bays and two smaller bays. An eight-SATA-bay map can therefore produce misleading highlights. Changing the entire model profile merely to obtain another picture could change unrelated hardware behavior.
 
-Instead, we used the **TS-873A front artwork**, which has eight large bays side by side, from the official `TS-X73A_20260731-5.2.10.3577` firmware. This was local resource extraction, not installation of another model's firmware. No vendor SVGs or firmware binaries are redistributed in this repository.
+For the 5.2 reference profile, **TS-873A front artwork** from the matching official `TS-X73A_20260731-5.2.10.3577` package supplied eight large bays. Extract artwork locally without installing another model's firmware. No vendor SVGs or firmware binaries are redistributed in this repository.
 
 Under `/home/httpd/v3_menu/layout/`, the local replacements were:
 
@@ -211,7 +185,7 @@ Back up the actual target files and inspect any `model_0.svg` symlink first. Che
 |---|---|
 | <img src="../assets/screenshots/chassis-artwork-before.png" width="230" alt="Original chassis drawing with six large bays and two smaller bays"> | <img src="../assets/screenshots/chassis-artwork-after.png" width="230" alt="Patched chassis preview with eight large bays"> |
 
-The left crop is from the historical QTS smart-install welcome screen, before recovery; the right crop is from the later Storage & Snapshots disk preview. They show the two actual UI renderings, **not the same page or a new installer run**. The original screenshot was reused without reopening setup. The patch replaces presentation assets only; the accepted SATA/HAL bay mapping remains separate. The wider disk-preview screenshot below supplies the surrounding context.
+*The original welcome-screen drawing and the adapted Storage & Snapshots preview are from different pages. Compare the bay arrangement, not page layout or scale. Verify selected slots against the HAL map after installation.*
 
 ![All eight disks in Storage & Snapshots](../assets/screenshots/eight-disks-native-en.jpg)
 
@@ -246,7 +220,7 @@ A read-only audit should:
 4. Report ELF logical bytes separately from whole-directory bytes, compressed archives, data and models. Record permission errors or files disappearing during the scan. Logical sizes are not a promise of reclaimable physical space.
 5. Back up app data/configuration before installing a compatible x86-64 package and testing its own restore procedure. Do not simply re-enable the old ARM package or bulk-delete `.qpkg`.
 
-The case scan found **18 unregistered directories totaling about 10.25 GiB**, of which **1.44 GiB** was ARM64 ELF content. Registered Container Station also contained about 972 MiB of ARM64 files in container layers; another registered package bundled a cross-platform ARM64 binary. Those are not automatically obsolete files. Do not delete individual files from container layers. One Container Station read error limited that part of the scan; the remaining app scans had no read errors. All app data and binaries were retained. The full path/file inventory stays private.
+Container layers and cross-platform packages can legitimately contain ARM binaries on an x86 system. Do not delete individual files from container layers. Keep unreadable or changing files in the audit's unresolved list; a partial scan cannot establish reclaimable space.
 
 ## Persist changes and verify them after boot
 
@@ -254,9 +228,13 @@ Editing `/etc/model.conf` or the live web root alone is insufficient on this RAM
 
 Keep the original boot guards, disk paths and unrelated-OS isolation intact. Before replacing an overlay, verify the boot disk's identity, size, partition geometry and device-mapper target; compare the old file's hash, retain a rollback copy, write a temporary file, read it back and rename it into place. Record the new hash privately. A whole-model rescan warning is not a successful acceptance result.
 
-In this case the new overlay was read back successfully and the artwork helper was manually tested. Both data arrays remained complete (`[UU]`, `[UUU]`). The later unified mod overlay was also backed up and hash-verified on the dedicated boot device. **A future authorized reboot still needs to verify the unified one-shot hook, CPU/motherboard/fan readings, DIMM values, all disk temperatures, bay highlights and cache candidate list again.** Recheck these after firmware or BIOS updates too.
+After installation, verify current readings, DIMM values, disk temperatures, highlights and cache-candidate eligibility. At the next planned reboot, repeat the checks and confirm the startup hook's status. Recheck after firmware or BIOS changes. If restoration skips an unknown structure, leave the vendor files intact and adapt the relevant module before enabling it again.
 
-Administrative access was verified through SSH and `sudo -n`. Keep credentials out of commands, logs and screenshots. Passwordless administrator access is not required to follow this guide; it was an operator choice in this case, and its reboot persistence was not tested. No sudoers rule or private account details are included here.
+Keep credentials out of commands, logs and screenshots. Use existing authorized administrator access; passwordless sudo is not a prerequisite and no privilege-rule changes are part of this procedure.
+
+## Validation scope
+
+Reference-host live checks cover CPU/board/fan values, DIMM reporting, disk artwork and cache-candidate enumeration. Cache creation, ECC fault injection and thermal shutdown are not established by those checks. The repository tests use offline fixtures; final-package cold-boot and upgrade behavior require your own acceptance. See [reference results](case-study.md) for the boot/storage results separately.
 
 ---
 

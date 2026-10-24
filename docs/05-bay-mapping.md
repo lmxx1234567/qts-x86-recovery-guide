@@ -8,7 +8,7 @@ A working Linux driver and a successful QTS scan are necessary but insufficient.
 
 ## Collect three views
 
-1. **Physical:** bay label, photo and serial/WWN. Two MX500 SSD labels in this case were partly obscured; visible details helped distinguish them, but the physical 4/5 assignment remained a user-accepted inference rather than an independent LED test.
+1. **Physical:** bay label, photo and serial/WWN. Match readable labels or verified cable records; mark ambiguous positions unverified rather than assigning identical drives by appearance.
 2. **Linux:** block device, SCSI generic device, controller PCI path and controller-relative port. Read `/sys/class/block/DEVICE/device`, `/sys/class/scsi_generic/sgN/device`, `lsscsi -g`, and `lspci -nnk` in a diagnostic environment. Resolve symlinks with `readlink -f`.
 3. **QTS HAL:** actual enumeration and per-disk information under the target firmware's kernel/modules.
 
@@ -58,11 +58,11 @@ Match block and sg devices by the resolved SCSI-device path. The enclosing PCI c
 
 **Exit condition:** every populated bay has an unambiguous identity and successful reverse lookup; empty bays are either tested or explicitly pending. Retain the accepted profile and console log together. Changing cabling, PCI cards or BIOS settings requires rechecking this map.
 
-## The historical failure and its fix
+## Fix a scan that passes while reverse lookup fails
 
 The scan listed all eight disks in the desired order, with correct model and serial, but individual queries returned `ret=-1`, `port_id=0`. The installer later showed missing disks. Therefore the initial scan-only milestone was **not** acceptance.
 
-Testing `PCI_SWITCH_PORT` values 0–31 did not fix it. Inspection of the firmware's HAL reverse lookup showed it interpreted the bridged PCI path differently from forward enumeration. Adding the controller's full `DEV_PATH` alongside `DEV_BUS` and `DEV_PORT` resolved the problem. All eight queries then returned `ret=0` with the intended slots.
+For the bridged controller in this example, forward enumeration and reverse lookup resolved the PCI path differently. Adding the controller's full `DEV_PATH` alongside `DEV_BUS` and `DEV_PORT` produced `ret=0` with the intended slots. Inspect the path instead of trying arbitrary `PCI_SWITCH_PORT` values.
 
 ```ini
 [System Disk 1]
@@ -84,7 +84,7 @@ Temperature, fan, activity LEDs and hot-swap behavior require their own tests. S
 
 ## Complete observed profile and final mapping
 
-[Complete case model.conf](../templates/case-x570-model.conf) provides the working configuration structure. It includes the later live-verified CPU, DIMM and cache-port corrections; its CAP/network settings still do not certify those features. The revised overlay has not yet been reboot-tested. The general template remains intentionally incomplete.
+[Complete case model.conf](../templates/case-x570-model.conf) provides the working configuration structure. It includes CPU, DIMM and cache-port settings for this board/BIOS. It is not a complete current sensor or four-port network profile; verify all fields on your target. The general template remains intentionally incomplete.
 
 This table is transcribed from the final verified mapping record, not the earlier failed-scan screenshot:
 
@@ -99,13 +99,7 @@ This table is transcribed from the final verified mapping record, not the earlie
 | 7 | 960 GB SSD, unrelated | sg2 | 2b / 2 | return 0, slot 7 |
 | 8 | 1 TB HDD, unrelated | sg1 | 2b / 1 | return 0, slot 8 |
 
-The 4/5 physical-label inference noted above still applies. The sg names describe that boot only.
-
-## Screenshot evidence
-
-![Historical scan-only milestone: reverse lookup still failed](../assets/screenshots/eight-bay-hal-verified-en.png)
-
-See the [full screenshot journal](screenshots.md) for context and translations.
+Physical positions 4/5 were not independently verified in this example; confirm them from readable labels or cable records. The sg names describe that boot only.
 
 ## Follow-up: artwork and cache eligibility
 

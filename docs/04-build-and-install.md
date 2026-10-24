@@ -6,7 +6,6 @@
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
-
 This chapter describes the complete build contract and installation sequence. It requires a compatible externally obtained base loader; the repository is not a standalone firmware distribution. Work on regular image files first. Never run image-building commands against original data disks.
 
 ## A. Inspect the base image
@@ -66,12 +65,6 @@ A completed `dd` progress line is not acceptance. The following `cmp` must exit 
 3. To check original members, shut down before connecting the recorded disk set, then boot **diagnostic again**. Complete [all bay checks](05-bay-mapping.md) before choosing normal QTS. A powered-off diagnostic environment can be restarted through host controls after confirming normal storage services never started; do not use this as a general hard-reset instruction for running QTS.
 
 **Exit condition:** written-range verification passes, the SSD boots without rescue media, and the physical diagnostic environment is available. Pool migration is a separate step; do not initialize original disks to get past a welcome page.
-
-## Screenshot evidence
-
-![Boot SSD write/readback milestone](../assets/screenshots/980-write-verified-en.png)
-
-See the [full screenshot journal](screenshots.md) for context and translations.
 
 ---
 

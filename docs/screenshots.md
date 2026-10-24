@@ -1,225 +1,39 @@
-# Screenshot journal
+# Preview gallery
 
-Installation, troubleshooting and recovery milestones. Each caption identifies the stage and what the result establishes.
+Use these views to identify the fields to check on your own NAS. Screenshots show sampled state; they do not replace disk identity, file integrity or boot validation. English pages use English UI captures or text-free artwork. [Chinese UI captures](screenshots.zh-CN.md) are kept separately.
 
-## Custom chassis previews
+## Check hardware information
 
-The [chassis guide](12-custom-chassis-display.md) includes equal-size front/rear comparisons and light/dark examples. These are SVG renders; selected ports and dark-theme rules illustrate appearance rather than live device status.
+![QTS 5.2 CPU, memory topology and disk temperatures](../assets/screenshots/hardware-status-native-en.jpg)
 
-## Hardware and storage follow-up — 2026-10-18
+Check total memory, populated/empty slots and each supported temperature against the actual hardware. This capture predates board-sensor integration; “Not Supported” is the state of that capture. Use [sensor verification](07a-hardware-and-apps.md#cpu-motherboard-and-fan-readings) for the current adapter checks.
 
-Hardware and storage status after the follow-up fixes:
+## Check disk identity and selection
 
-- [Hardware status](../assets/screenshots/hardware-status-native-en.jpg): Ryzen 5800X, 64 GB, four memory slots, CPU and eight SATA temperatures. Board temperature remains unsupported.
-- [Eight disks](../assets/screenshots/eight-disks-native-en.jpg): all eight disks enumerated. Free does not mean safe to erase; the unrelated disks retain data.
-- [Eight-bay front preview](../assets/screenshots/eight-bay-preview-native-en.jpg): eight large bays, with slot 8 selected.
-- [Cache candidates](../assets/screenshots/cache-candidates-native-en.jpg): list scrolled to show SSDs 6/7, zero selected; wizard cancelled without creating cache.
-- [Qtier](../assets/screenshots/qtier-native-en.jpg): both tiers present, Idle / Automatic data tiering. No additional reboot or migration benchmark was performed for this follow-up.
+![Eight SATA disks in Storage & Snapshots](../assets/screenshots/eight-disks-native-en.jpg)
 
-The [follow-up changes](07a-hardware-and-apps.md) were saved to the overlay but have not yet been reboot-tested. The historical journal below keeps its original milestone meanings.
+All eight positions are listed. “Free” means not allocated by QTS; it does not mean the disk contains no data or is safe to initialize.
 
-Chinese UI glossary: 存储池 = Storage Pool; 空闲 = Idle; 自动数据分层 = Automatic Data Tiering; 超高速 = Ultra-high-speed tier; 容量 = Capacity tier; 已用 = Used; 总计 = Total; 下移/上移 = Move down/up; RAID 组 = RAID Group.
+![Eight-bay front preview and disk details](../assets/screenshots/eight-bay-preview-native-en.jpg)
 
-## 980 Independent Grub
+Compare each selection with the accepted [HAL bay map](05-bay-mapping.md). A picture alone cannot establish physical slot order.
 
-Early boot menu: diagnostic first, normal QTS second. This was not the final default configuration.
+## Check Qtier membership
 
-![Early boot menu: diagnostic first, normal QTS second. This was not the final default configuration.](../assets/screenshots/980-independent-grub-en.png)
+![SSD RAID1 and HDD RAID5 tiers in QTS 5.2](../assets/screenshots/qtier-native-en.jpg)
 
-[View screenshot](../assets/screenshots/980-independent-grub.png)
+Both populated tiers are present and tiering is Idle. The unused middle tier is not a missing member. Verify pool/RAID membership and files using [storage acceptance](06-migration.md#a-concrete-storage-and-file-checklist); see [reference results](case-study.md) for the measured reboot and upgrade scope.
 
-## 980 Write Verified
+## Inspect cache eligibility without creating a cache
 
-Dedicated boot SSD image written and read back successfully. Earlier lines show a payload filename mismatch.
+![Cache candidate list with no disks selected](../assets/screenshots/cache-candidates-native-en.jpg)
 
-![Dedicated boot SSD image written and read back successfully. Earlier lines show a payload filename mismatch.](../assets/screenshots/980-write-verified-en.png)
+Zero disks are selected. Candidate visibility is a separate check from cache suitability or permission to erase a disk. Cancel after inspection; follow [cache eligibility guidance](07a-hardware-and-apps.md#ssd-cache-candidates-a-slot-capability-bitmap) before changing settings.
 
-[View screenshot](../assets/screenshots/980-write-verified.png)
+## Compare custom enclosure previews
 
-## Arrays Readonly Complete
+![Original and custom front/rear artwork at equal width](../assets/chassis/before-after-270px.png)
 
-Historical inspection: MD RAID1 and RAID5 assembled read-only. This is not proof that later QTS startup is read-only.
+![Light and simulated dark appearance](../assets/chassis/transparent-light-dark.png)
 
-![Historical inspection: MD RAID1 and RAID5 assembled read-only. This is not proof that later QTS startup is read-only.](../assets/screenshots/arrays-readonly-complete-en.png)
-
-[View screenshot](../assets/screenshots/arrays-readonly-complete.png)
-
-## Bmc Login Required
-
-BMC login required. Re-authenticate and reopen KVM; do not reset the NAS merely to fix a session.
-
-![BMC login required. Re-authenticate and reopen KVM; do not reset the NAS merely to fix a session.](../assets/screenshots/bmc-login-required-en.png)
-
-[View screenshot](../assets/screenshots/bmc-login-required.png)
-
-## Bmc Powered Off
-
-BMC power controls. Verify the actual host power state after a shutdown request.
-
-![BMC power controls. Verify the actual host power state after a shutdown request.](../assets/screenshots/bmc-powered-off-en.png)
-
-[View screenshot](../assets/screenshots/bmc-powered-off.png)
-
-## Bmc Session Expired
-
-BMC session expired. Console and virtual-media state must be checked after re-login.
-
-![BMC session expired. Console and virtual-media state must be checked after re-login.](../assets/screenshots/bmc-session-expired-en.png)
-
-[View screenshot](../assets/screenshots/bmc-session-expired.png)
-
-## Bmc Timeout Limit
-
-BMC web/session timeout settings. Available limits depend on BMC firmware.
-
-![BMC web/session timeout settings. Available limits depend on BMC firmware.](../assets/screenshots/bmc-timeout-limit-en.png)
-
-[View screenshot](../assets/screenshots/bmc-timeout-limit.png)
-
-## Eight Bay Hal Verified
-
-HISTORICAL FAILURE: scan order was correct, but reverse lookup still returned -1 / port 0. Later fixed with DEV_PATH.
-
-![HISTORICAL FAILURE: scan order was correct, but reverse lookup still returned -1 / port 0. Later fixed with DEV_PATH.](../assets/screenshots/eight-bay-hal-verified-en.png)
-
-[View screenshot](../assets/screenshots/eight-bay-hal-verified.png)
-
-## Kvm Partial Access
-
-KVM partial-access/session issue. Console control permissions are separate from QTS health.
-
-![KVM partial-access/session issue. Console control permissions are separate from QTS health.](../assets/screenshots/kvm-partial-access-en.png)
-
-[View screenshot](../assets/screenshots/kvm-partial-access.png)
-
-## Pool Vg1 Hdd Metadata
-
-Historical metadata inspection: HDD-side VG metadata and read-only MD arrays.
-
-![Historical metadata inspection: HDD-side VG metadata and read-only MD arrays.](../assets/screenshots/pool-vg1-hdd-metadata-en.png)
-
-[View screenshot](../assets/screenshots/pool-vg1-hdd-metadata.png)
-
-## Pool Vg1 Metadata
-
-Historical metadata inspection: VG/PV layout. Matching metadata alone does not prove complete data integrity.
-
-![Historical metadata inspection: VG/PV layout. Matching metadata alone does not prove complete data integrity.](../assets/screenshots/pool-vg1-metadata-en.png)
-
-[View screenshot](../assets/screenshots/pool-vg1-metadata.png)
-
-## Qtier After Default Reboot
-
-AFTER UNATTENDED REBOOT: Qtier Idle; Automatic Data Tiering; SSD 3.63 TB / 29.7%; HDD 14.54 TB / 64.2%.
-
-![AFTER UNATTENDED REBOOT: Qtier Idle; Automatic Data Tiering; SSD 3.63 TB / 29.7%; HDD 14.54 TB / 64.2%.](../assets/screenshots/qtier-after-default-reboot-en.png)
-
-[View screenshot](../assets/screenshots/qtier-after-default-reboot.png)
-
-## Qtier Restored Verified
-
-RECOVERED POOL: Qtier Idle; Automatic Data Tiering; RAID1 SSD tier and RAID5 HDD tier visible.
-
-![RECOVERED POOL: Qtier Idle; Automatic Data Tiering; RAID1 SSD tier and RAID5 HDD tier visible.](../assets/screenshots/qtier-restored-verified-en.png)
-
-[View screenshot](../assets/screenshots/qtier-restored-verified.png)
-
-## Qts After Eight Bay Boot
-
-Historical smart-install welcome page before successful recovery. Do not initialize original disks from this page.
-
-![Historical smart-install welcome page before successful recovery. Do not initialize original disks from this page.](../assets/screenshots/qts-after-eight-bay-boot-en.png)
-
-[View screenshot](../assets/screenshots/qts-after-eight-bay-boot.png)
-
-## Qts Baremetal Web
-
-Initial QTS web welcome page with boot SSD. Web availability alone does not validate a recovered pool.
-
-![Initial QTS web welcome page with boot SSD. Web availability alone does not validate a recovered pool.](../assets/screenshots/qts-baremetal-web-en.png)
-
-[View screenshot](../assets/screenshots/qts-baremetal-web.png)
-
-## Qts Default Boot Order
-
-Permanent UEFI BootOrder now selects QTS first. Virtual CD shows 0 KB / inactive. Subsequent reboot was verified.
-
-![Permanent UEFI BootOrder now selects QTS first. Virtual CD shows 0 KB / inactive. Subsequent reboot was verified.](../assets/screenshots/qts-default-boot-order-en.png)
-
-[View screenshot](../assets/screenshots/qts-default-boot-order.png)
-
-## Qts Restored Hostname Login
-
-QTS console login after the old configuration returned.
-
-![QTS console login after the old configuration returned.](../assets/screenshots/qts-restored-hostname-login-en.png)
-
-[View screenshot](../assets/screenshots/qts-restored-hostname-login.png)
-
-## Qts Uefi Name
-
-Historical UEFI entry naming and one-time BootNext selection. BootNext is not a permanent default.
-
-![Historical UEFI entry naming and one-time BootNext selection. BootNext is not a permanent default.](../assets/screenshots/qts-uefi-name-en.png)
-
-[View screenshot](../assets/screenshots/qts-uefi-name.png)
-
-## Reconnected Disk Inventory
-
-Read-only device inventory after reconnecting disks. Device names can change between boots.
-
-![Read-only device inventory after reconnecting disks. Device names can change between boots.](../assets/screenshots/reconnected-disk-inventory-en.png)
-
-[View screenshot](../assets/screenshots/reconnected-disk-inventory.png)
-
-## Sata Port Mapping
-
-Linux by-path controller/port links. These must be correlated with physical bays and QTS HAL reverse queries.
-
-![Linux by-path controller/port links. These must be correlated with physical bays and QTS HAL reverse queries.](../assets/screenshots/sata-port-mapping-en.png)
-
-[View screenshot](../assets/screenshots/sata-port-mapping.png)
-
-## Raid Sda3
-
-Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.
-
-![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sda3-en.png)
-
-[View screenshot](../assets/screenshots/raid-sda3.png)
-
-## Raid Sde3
-
-Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.
-
-![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sde3-en.png)
-
-[View screenshot](../assets/screenshots/raid-sde3.png)
-
-## Raid Sdf3
-
-Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.
-
-![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sdf3-en.png)
-
-[View screenshot](../assets/screenshots/raid-sdf3.png)
-
-## Raid Sdg3
-
-Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.
-
-![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sdg3-en.png)
-
-[View screenshot](../assets/screenshots/raid-sdg3.png)
-
-## Raid Sdh3
-
-Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.
-
-![Historical MD member examination: RAID level, size, role and event counters. Device letters are case-specific.](../assets/screenshots/raid-sdh3-en.png)
-
-[View screenshot](../assets/screenshots/raid-sdh3.png)
-
-## QTS 6.1 follow-up
-
-The [upgrade report](11-qts61-upgrade.md#recovered-storage-and-monitoring) shows the original RAID groups Ready, both Qtier tiers and native CPU/motherboard readings after the 6.1 migration. These are later physical-host results, separate from the original 5.2 reboot screenshots.
+These are SVG renders with example selections, not live telemetry. The dark view uses simulated theme rules. Follow the [chassis guide](12-custom-chassis-display.md) to calibrate ports and trays, install adapted resources and verify actual QTS pages.

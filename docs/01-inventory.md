@@ -32,13 +32,13 @@ lspci -nnk
 
 Run `sudo python3 tools/inventory.py > /path/on/separate-storage/inventory.json` from this repository. The collector reads device metadata; its output destination must not be an original recovery disk. It does not assemble arrays, mount filesystems, import pools or run SMART tests. Check recorded return codes: an unavailable command is missing evidence.
 
-For an explicitly identified member partition, `mdadm --examine /dev/disk/by-id/VERIFIED_ID-part3` reads the MD superblock. Partition 3 was the data member in our case, **not a universal assumption**. Record RAID UUID, role, event counter, level and member count for all disks. Reading partition tables and RAID superblocks is different from activating an array. Generic LVM tools may not understand QNAP-specific Qtier metadata; do not activate or repair it casually.
+For an explicitly identified member partition, `mdadm --examine /dev/disk/by-id/VERIFIED_ID-part3` reads the MD superblock. Partition 3 was the data member in the reference layout, **not a universal assumption**. Record RAID UUID, role, event counter, level and member count for all disks. Reading partition tables and RAID superblocks is different from activating an array. Generic LVM tools may not understand QNAP-specific Qtier metadata; do not activate or repair it casually.
 
 ## Copies and hashes
 
 Make consistent full-disk clones/images with a tool suited to device health. GNU ddrescue with a persistent mapfile is appropriate for failing media, but source and destination selection must be reviewed separately; this repo intentionally does not guess them. Keep originals offline after imaging. Do not expose originals and their UUID-identical clones to an auto-assembling OS together.
 
-A GPT backup or copies of the first few GiB are **not a data backup**. A prior experiment preserved metadata regions, but these were not full clones and can become stale after tier movement. They do not justify a general rollback promise.
+A GPT backup or copies of the first few GiB are **not a data backup**. Metadata-only copies can become stale after tier movement and cannot restore the complete pool.
 
 If the old system is readable, hash representative files before shutdown. Use the same relative paths after recovery and compare size and SHA-256. Read large files and examples from every volume; check ACLs and application-specific data separately. A hash first computed after migration proves readability, not unchanged data.
 

@@ -1,35 +1,16 @@
-# QTS 6.1: upgrade procedure and verified results
+# Upgrade an existing installation to QTS 6.1
 
 [← Release choices](02a-release-tracks.md) · [Shared installation commands](10-command-walkthrough.md) · [Updates and rollback →](08-updates.md)
 
 This chapter contains only the differences and the existing-installation branch. **New installation:** select the Beta variables and X73A profile in the shared walkthrough, complete its VM and physical gates, then recover the disk set using [chapter 6](06-migration.md). A preliminary 5.2 installation is not required for that path.
 
-## 1. What actually ran
+## 1. Compatibility and prerequisites
 
-| Layer | Verified result | Limit |
-|---|---|---|
-| Lab update | TS-X73A 5.2.10.3577 → 6.1.0.3640 through QTS's native updater; kernel 5.10.60-qnap → 6.6.129-qnap | Manual update, not scheduled unattended installation |
-| Lab disk-only cold start | New QEMU process booted its virtual NVMe through UEFI/GRUB, without a maintenance CD or direct kernel boot | One disposable static volume; not a Qtier simulation |
-| Lab preservation | Both firmware slots updated; EFI/GRUB and support overlay survived; all seven DOM mappings matched; 32 MiB test-file hash unchanged | Exact examined build/layout only |
-| Physical upgrade | Consistent offline boot backup; SATA disconnected; both firmware slots and the reviewed model/overlay updated; EFI and other boot partitions retained | An offline boot-image migration, not a cross-family in-place native update |
-| Physical storage | Reconnected complete five-disk Qtier set; original login/management port returned; 18.17 TB pool, SSD RAID1 and HDD RAID5 Ready; original volumes mounted | Nine partial file reads succeeded; no full pre/post dataset checksum comparison |
-| Physical monitoring | Native CPU + actual motherboard/fan readings validated; updated adapter saved to support overlay | Final monitoring/thermal follow-up has not had a subsequent physical cold-boot test |
+The reference path uses TS-X73A **6.1.0.3640 / build 20261007**, kernel **6.6.129-qnap**, on the X570D4U-2L2T. Check Beta application support before choosing it. The [reference results](case-study.md) distinguish the native same-family VM update from the physical X77-to-X73A offline migration.
 
-The data disks were absent during boot-image writing, but normal QTS startup after reconnecting them is write-capable. A boot backup cannot undo later storage metadata or application migrations. The operator's choice to proceed without an independent bulk-data backup is not a general recovery recommendation.
+Before proceeding, retain a consistent boot backup, configuration export and independent data copy. Keep console/rescue access available. Data disks remain disconnected while writing the boot image; reconnect the complete set only after diagnostics pass. Normal QTS startup is write-capable, so restoring an old boot image cannot undo later pool or app migrations.
 
-### Recovered storage and monitoring
-
-![QTS 6.1 pool and RAID groups Ready](../assets/screenshots/qts61-pool-ready.png)
-
-Both original RAID groups are Ready: SSD RAID1 (3.63 TB) and HDD RAID5 (14.54 TB). In this view, `就绪` means Ready and `良好` means Good.
-
-![QTS 6.1 Qtier tiers and schedule](../assets/screenshots/qts61-tiers-ready.png)
-
-Qtier is Idle (`空闲`) with automatic data tiering retained. Both populated tiers are present; the unused middle tier is not a missing member.
-
-![QTS CPU and motherboard temperatures after sensor repair](../assets/screenshots/qts61-temperature.png)
-
-The dashboard reports CPU69°C and motherboard47°C at this sample. `系统` means System. This is a live-reading milestone, not a heat-shutdown test.
+QTS 6.1 restored the reference SSD RAID1/HDD RAID5 Qtier pool and volumes. Use the [storage acceptance checklist](06-migration.md#a-concrete-storage-and-file-checklist) to check your own members and files. [Chinese QTS 6.1 screenshots](screenshots.zh-CN.md#qts-61-存储与监控) show actual pool, tier and temperature views.
 
 ## 2. Test the native update in a disposable VM
 
@@ -74,11 +55,11 @@ sha256sum "$UPDATE_IMG"
 /etc/init.d/update.sh "$UPDATE_IMG"
 ```
 
-For this examined `.img`, SHA-256 was `c73c47801387ebbce7a8d02531b3eca956ae5995828b0ba4dcec4c48731efc8f`. This identifies our package, not future releases. The ZIP has a different hash. The passing run reported code-signing `fp_status=0 cert_status=0`, `Update Finished`, and `Upgrade from 5.2.10 to 6.1.0`; QTS progress was 3 with error 0. **Do not accept a shell exit of 0 alone.** One failed run returned 0 with missing input (`FW001`). Native cleanup consumed the staged file; if QTS explicitly asks for a retry, restore and hash-check a fresh input copy first. Do not keep retrying unexplained failures or disable signing checks.
+For this examined `.img`, SHA-256 was `c73c47801387ebbce7a8d02531b3eca956ae5995828b0ba4dcec4c48731efc8f`. This identifies that package, not future releases. The ZIP has a different hash. The passing run reported code-signing `fp_status=0 cert_status=0`, `Update Finished`, and `Upgrade from 5.2.10 to 6.1.0`; QTS progress was 3 with error 0. **Do not accept a shell exit of 0 alone.** A missing input (`FW001`) can still return shell status 0. Native cleanup consumed the staged file; if QTS explicitly asks for a retry, restore and hash-check a fresh input copy first. Do not keep retrying unexplained failures or disable signing checks.
 
 After the updater completes, follow its restart instructions. Check the displayed version **and** `uname -r`. Then shut down fully, confirm QEMU exited, and launch a new process using the same disks/UEFI variables, with no ISO. Re-run the commands above and the sample hash. Offline-inspect the new EFI/GRUB/support files and both firmware slots. Gate passes only when the expected kernel, DOM geometry, boot exclusion, HAL mapping and test volume/hash all agree.
 
-Online update discovery is a separate experiment: the isolated `restrict=on` QEMU network cannot reach QNAP. Do not call offline manual installation proof of automatic discovery or scheduled installation.
+Online update discovery requires a separate check: the isolated `restrict=on` QEMU network cannot reach QNAP. Do not call offline manual installation proof of automatic discovery or scheduled installation.
 
 ## 3. Upgrade an existing custom QTS installation
 
@@ -113,7 +94,7 @@ cmp -n "$(blockdev --getsize64 "$BOOT_DEV")" "$BOOT_DEV" "$BACKUP_DIR/boot-befor
 sha256sum "$BACKUP_DIR/boot-before.img" > "$BACKUP_DIR/boot-before.img.sha256"
 ```
 
-Stop on any failure. The physical case instead backed up the complete **8 GiB DOM span plus the last 1 MiB and GPT metadata**, after proving all boot partitions/configuration were inside that span; this was not a full 500 GB clone. Do not use that optimization without proving your own layout and unused tail. It does not reduce the need for independent data backups. Store another verified boot copy off the NAS.
+Stop on any failure and store another verified boot copy off the NAS. A bounded boot-span backup requires proof that every boot partition/configuration is included, plus separate GPT/tail preservation; it is not a full SSD clone or a data backup. Prefer the complete clone above unless you have verified those boundaries.
 
 ### 3.3 Build on a copy, preserving the working boot contract
 
@@ -131,7 +112,7 @@ python3 tools/prepare_release_overlay.py --base private/profile.before.cpio.gz \
 cat private/profile.cpio.review.json
 ```
 
-The conservative public candidate changes the examined model identity fields and removes only the recognized optional late-mod hook if present. All disk/boot identity and geometry guards remain byte-identical, as do other archive members. It does **not** remove unknown helpers, account rules, binary patches or diagnostic assumptions. Inspect your source first; an unfamiliar wrapper is a manual engineering task, not a reason to weaken the checks. The physical case retained its separately validated optional adapter instead. Re-enable optional monitoring only after release-specific tests in section 5.
+The conservative public candidate changes the examined model identity fields and removes only the recognized optional late-mod hook if present. All disk/boot identity and geometry guards remain byte-identical, as do other archive members. It does **not** remove unknown helpers, account rules, binary patches or diagnostic assumptions. Inspect your source first; an unfamiliar wrapper is a manual engineering task, not a reason to weaken the checks. Re-enable optional monitoring only after release-specific tests in section 5.
 
 For readers with a basic public overlay and no optional mods, the same command changes only the model. For private archives with other helpers, inspect those helpers and stop if they embed old kernel paths or unvalidated side effects. Build a new diagnostic archive with the selected model and `templates/diagnostic-init.example`; its module path follows `uname -r`.
 
@@ -193,9 +174,9 @@ After normal 6.1 startup has touched the pool, **restoring the boot SSD alone is
 | Memory/cache eligibility | VM DIMM metadata may be incomplete; bay mask depends on the actual mapped slots | Verify SMBIOS/HAL readback. Synthetic VM fixtures never become production sensor/DIMM data |
 | Artwork | Old TS-877 target SVG paths may disappear under X73A | Prefer native X73A artwork; skip stale cosmetic replacements without blocking storage |
 | Container networking | Host-network qBittorrent bound internal bridges and caused repeated ICMP local-route warnings | Verify actual sockets/routes. In this case binding BT traffic to the real uplink stopped warnings; do not globally suppress kernel logging or copy the interface name onto another host |
-| Thermal shutdown | Thresholds inherited from an appliance need review against actual hardware | Read config and the fresh HAL-loaded log; the case's operator-selected CPU91 is not a universal recommendation or a tested heat-shutdown event |
+| Thermal shutdown | Thresholds inherited from an appliance need review against actual hardware | Read config and the fresh HAL-loaded log; choose hardware-appropriate limits; a configured threshold does not prove shutdown protection |
 
-The public optional helper now includes the portable parts of these findings: capability-based release checks with protected mappings retained, available-Python selection, a 35-second monitor transition bound, preservation of a spawned monitor on client timeout, native 6.1 widget detection, mapped-bay cache masks and `TEMP_1` cache validation. These helpers are optional and still require a private board profile; they do not enable the production 91°C override or contain a broad sudo rule. The retained `thermal.py`/`patch_thermal_overlay.py` are a separately invoked, host-gated historical CPU90 example, not a default installation step. This documentation revision tests the public changes offline; it does not claim a new physical boot of this exact public package.
+The public optional helper now includes the portable parts of these findings: capability-based release checks with protected mappings retained, available-Python selection, a 35-second monitor transition bound, preservation of a spawned monitor on client timeout, native 6.1 widget detection, mapped-bay cache masks and `TEMP_1` cache validation. These helpers are optional and require a private board profile. The retained `thermal.py`/`patch_thermal_overlay.py` are a separately invoked, host-gated historical CPU90 example, not a default installation step. Validate the exact package on your hardware before relying on its boot-time behavior.
 
 Read-only monitoring checks on the destination:
 
@@ -209,6 +190,6 @@ done
 grep -E '^(CPUT_1|TEMP_1|FANR_1|FANR_2)[[:space:]]*=' /tmp/em/em_0.info
 ```
 
-Do not automatically raise thresholds or restart protection during high load. The later one-off high-load change was explicitly operator-authorized; it is not part of installation. Passwordless sudo, private account rules, raw logs and host-specific overlays are not published as defaults.
+Do not automatically raise thresholds or restart protection during high load. Keep existing thermal protection active while validating monitoring; policy changes need a separate hardware-specific plan.
 
 [← Release choices](02a-release-tracks.md) · [Shared installation commands](10-command-walkthrough.md) · [Updates and rollback →](08-updates.md)

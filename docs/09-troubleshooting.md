@@ -1,9 +1,8 @@
-# 9. Troubleshooting: symptoms, causes and verified fixes
+# 9. Troubleshooting
 
-| Symptom | What it meant in this case | Action / acceptance |
+| Symptom | Likely cause / diagnostic check | Action / acceptance |
 |---|---|---|
 | Linux sees all disks; QTS scan lists them; installer sees no usable disks | HAL reverse mapping failed (`ret=-1`, port 0) behind PCI bridges | Add verified controller `DEV_PATH`; require per-disk return 0 and correct slot |
-| Trying PCI_SWITCH_PORT 0–31 changes nothing | Wrong hypothesis for this topology | Inspect full controller path; do not keep random settings |
 | Correct model/serial in scan output | Identity enumeration only | Validate reverse lookup and actual installer/storage behavior |
 | `hal_app` fails in minimal diagnostic init | Matching HAL module/runtime may be missing | Load matching `hal_netlink`; preserve complete output |
 | Rescue sees NVMe0; another OS calls it NVMe1 | Enumeration changed | Select by verified serial/model/capacity, never remembered device name |
@@ -22,15 +21,13 @@
 | ISO filename not found | Mounted payload name differed from script expectation | List mounted media; check exact file/hash rather than rerun a writer blindly |
 | Diagnostic output scrolls off screen | Evidence incomplete | Capture to RAM or a verified non-data destination; do not claim eight-bay success from partial output |
 | CPU temperature absent despite k10temp | Model profile hid the available native source | Case fix: `MAX_TEMP_NUM=1`, `CPU_TEMP_UNIT=DTS:1`; refresh HAL and verify real values |
-| System temperature / fans absent | This kernel did not expose motherboard/BMC sensors locally | BMC readings exist separately; integration deferred, preserve independent fan management |
+| System temperature / fans absent | Native source or board-specific adapter is unavailable, or monitoring cache is stale | Compare BMC and native readings; use the checked board adapter only on supported hardware and retain independent fan control |
 | Total memory 0 B, invalid slot/channel label | One-slot placeholder profile lacked a working DIMM source | Verify SMBIOS; configure DMI access, real channel/slot counts and BIOS-specific offsets |
 | Disks 7/8 listed but not highlighted in the TS-877 front image | Six-large-plus-two-small artwork mismatched the slot presentation | Locally replace front artwork with an eight-large-bay resource; retain HAL mapping |
 | SSD cache wizard lists no candidates | Cacheable port bitmap was zero | Case mask `0x1FE` covers verified slots 1–8; eligibility is not permission to erase disks |
 | ARM64 apps missing after x86 recovery | Old directories survived without current registration; executable architecture differs | Inventory registration and ELF headers, preserve data and use compatible packages |
 
-The HAL error above is **historical and resolved** in the final case. Current acceptance showed eight successful per-disk HAL lookups and a recovered Qtier pool. Some historical screenshots predate that fix; their captions state their limited meaning.
-
-The later fixes above are documented in [hardware presentation and apps](07a-hardware-and-apps.md), including live verification, remaining limits and pending reboot verification.
+Use [hardware and application checks](07a-hardware-and-apps.md) for sensor freshness, DIMM topology and app registration. A passing scan alone is never the disk-mapping acceptance gate.
 
 ## After a 5.2 → 6.1 change
 

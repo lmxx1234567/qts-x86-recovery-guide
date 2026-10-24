@@ -28,9 +28,7 @@ Detailed procedure and evidence live in [the 6.1 chapter](11-qts61-upgrade.md); 
 
 ## Notifications versus installation
 
-During the original 5.2 operation, the operator selected **“Notify me, but do not automatically update firmware”** in **Control Panel → System → Firmware Update**. Check the actual current UI on your system; do not copy undocumented numeric configuration values between builds. The historical screenshot below records that selection and a separate warning that notification recipients were not configured.
-
-![Firmware settings: notify only, with no notification delivery rule configured](../assets/screenshots/firmware-notify-only.png)
+For manual upgrade control, choose **“Notify me, but do not automatically update firmware”** under **Control Panel → System → Firmware Update**, if offered by your build. Verify the displayed setting instead of copying undocumented numeric configuration values. Notification delivery requires its own configured recipients/rules; see the [Chinese UI example](screenshots.zh-CN.md#更新通知).
 
 Configure notification delivery separately if you want email/push alerts. A check schedule is not an installation schedule. Read [QNAP's automatic-update policy](https://docs.qnap.com/operating-system/qts/5.2.x/en-us/updating-the-firmware-automatically-4229F6D2.html) and the current UI before changing it. Application auto-updates are a separate setting and need their own compatibility review, particularly on Beta.
 
@@ -50,11 +48,11 @@ The observed 6.1 Beta appeared in the official `QTS_FW_5.2.0_beta.xml` feed. Thi
 
 The public optional helpers are reference tooling, not a universal board adapter. A minimal boot/storage candidate can disable the recognized optional startup hook with `prepare_release_overlay.py` while retaining the boot guards. Re-enable only the modules tested for your hardware and release. Keep unknown binary/UI structures unchanged. A version number is evidence, not proof of compatibility; removing a version-prefix gate without retaining identity and semantic checks is not an adaptation strategy.
 
-## Retained monitor and thermal reference code
+## Optional monitoring and thermal policy
 
-The earlier 5.2 investigation found native sensor readers contending for direct KCS access. The verified correction retained exclusive access, serialized/bounded transactions and fresh-reading checks. The source and regression tests remain in `tools/qts-mods` and `tests`; the full chronological failed-attempt log is not required to install either release.
+The optional sensor adapter serializes and bounds KCS reads and verifies fresh readings. Preserve exclusive access; do not add another kernel/userspace KCS reader alongside it. Use the [monitoring troubleshooting steps](07a-hardware-and-apps.md#recover-a-failed-monitoring-module) when restoration fails.
 
-`thermal.py` and `patch_thermal_overlay.py` retain a **separately invoked, host-gated CPU90 case policy** from that work. They are not called by the default public startup hook, and are not a universal CPU limit. The later operator-selected CPU91 change and one-off high-load activation are described in the 6.1 report, without installing that policy for readers. Do not weaken a temperature guard or disable thermal protection to make a test pass. Public helper tests are offline; the exact public package still needs its own cold-boot test on your board.
+`thermal.py` and `patch_thermal_overlay.py` are a separately invoked, host-gated CPU90 reference policy, not part of default startup. Do not copy a temperature threshold from the reference host or weaken thermal protection to pass a test. Determine safe limits from your hardware and cooling requirements, then validate any policy separately from reporting.
 
 ## Rollback
 

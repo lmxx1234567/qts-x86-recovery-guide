@@ -4,13 +4,13 @@
 [← Previous: Map every bay](05-bay-mapping.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Independent boot and acceptance →](07-acceptance.md)
 <!-- /stage-navigation -->
 
-The storage procedure is shared by both release tracks. The original pool was recovered on 5.2 and later on 6.1; see [the version-specific evidence and limits](11-qts61-upgrade.md#1-what-actually-ran).
+The storage procedure is shared by both release tracks. The original pool was recovered on 5.2 and later on 6.1; see [the version-specific evidence and limits](11-qts61-upgrade.md#1-compatibility-and-prerequisites).
 
 ## Choose the right branch
 
 QNAP distinguishes an uninitialized destination receiving a complete old system disk set from an already initialized destination attaching another pool. The latter may use **Storage & Snapshots → Disks/VJBOD → Recover → Attach and Recover Storage Pool** (menu grouping varies by version). See [QNAP's migration FAQ](https://www.qnap.com/en-ca/how-to/faq/article/what-should-i-do-if-migrated-disks-are-not-shown-as-storage-pool-qnap-nas).
 
-Those instructions describe supported QNAP appliances; they do not certify a generic PC. In our case, after fixing HAL mapping, normal QTS startup recovered the old configuration and pool automatically. We did **not** click an initialization wizard or run a manual attach/recover action.
+Those instructions describe supported QNAP appliances; they do not certify a generic PC. On the reference host, normal startup recovered the configuration and pool automatically after HAL mapping was corrected. If that happens, proceed directly to verification.
 
 ## Decide before clicking anything
 
@@ -106,13 +106,7 @@ Restored storage and app data do not prove every QPKG can run on the destination
 
 Do not recreate a pool with the old disks, treat a missing SSD tier as optional cache, force generic LVM activation, restore stale VG metadata over a live pool, or run repair commands just because a UI is slow. A RAID UUID match alone does not establish a consistent Qtier transaction state.
 
-Our unrelated bays 6–8 were never selected for QTS initialization or pool configuration. An intermediate boot into the old OS occurred and could have auto-mounted its ZFS pool. Thus the record does **not** establish zero writes to those disks. For a new recovery, disconnect unrelated storage where practical and explicitly control which OS boots.
-
-## Screenshot evidence
-
-![Recovered Qtier pool](../assets/screenshots/qtier-restored-verified-en.png)
-
-See the [full screenshot journal](screenshots.md) for context and translations.
+Disconnect unrelated storage where practical and explicitly control which OS boots. An unintended boot into another installed OS can auto-import its pools even if QTS never selected those disks.
 
 ---
 
