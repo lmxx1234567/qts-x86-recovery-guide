@@ -1,8 +1,8 @@
 # 7. Independent boot and data acceptance
 
-<!-- stage-navigation -->
-[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Hardware display and apps →](07a-hardware-and-apps.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** verify the [recovered pool, tiers, volumes and files](06-migration.md#a-concrete-storage-and-file-checklist).
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
@@ -58,8 +58,4 @@ A GUI saying Ready does not validate every file. A few sample hashes do not vali
 
 Continue with [hardware presentation and cross-architecture apps](07a-hardware-and-apps.md). Verify CPU/disk temperatures, real DIMM topology, front-preview highlights and cache eligibility separately from storage recovery. Record live verification and post-change reboot verification as distinct results. A missing App Center entry is not proof that its data has disappeared.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Recover the disk set](06-migration.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Hardware display and apps →](07a-hardware-and-apps.md)
-<!-- /stage-navigation -->
+**Recovery route complete:** keep the [acceptance record](../templates/acceptance.md). Continue only as needed with [hardware/apps and previews](../README.md#optional-configuration-after-recovery), or [future update planning](08-updates.md).

@@ -1,8 +1,8 @@
 # 8. Updates and rollback
 
-<!-- stage-navigation -->
-[← Previous: Hardware display and apps](07a-hardware-and-apps.md) · [Workflow index](../README.md#read-in-this-order) · [6.1 upgrade procedure →](11-qts61-upgrade.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before updating:** retain the [accepted boot/storage baseline](07-acceptance.md) and review the [target release](02a-release-tracks.md). Hardware cosmetic changes are not a prerequisite.
 
 Use the same update discipline for [both release tracks](02a-release-tracks.md). A successful boot of a newer image, a native manual update, update discovery, and scheduled unattended installation are **four different results**.
 
@@ -60,4 +60,4 @@ Retain an off-device copy of the original firmware payload, EFI/configuration, c
 
 Before original data disks have been exposed to new normal startup, an offline boot restore can return the boot environment to the recorded state. After pool/system-volume/app metadata changes, restore of the boot SSD alone is **not a validated downgrade**. Preserve the current disks, stop further writes and recover using an independently consistent data copy or export. Do not repeatedly alternate firmware versions against the only surviving pool.
 
-[← Previous: Hardware display and apps](07a-hardware-and-apps.md) · [Workflow index](../README.md#read-in-this-order) · [6.1 upgrade procedure →](11-qts61-upgrade.md)
+**Next:** for the X77 → X73A / 6.1 change, follow [the existing-installation procedure](11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation); otherwise apply the per-release gates above. Finish with [storage and boot acceptance](07-acceptance.md).

@@ -1,5 +1,9 @@
 # Preview gallery
 
+[Task index](../README.md#read-in-this-order)
+
+**Reference only:** choose an image for the check you are performing; follow the [task index](../README.md#read-in-this-order) for the procedure.
+
 Use these views to identify the fields to check on your own NAS. Screenshots show sampled state; they do not replace disk identity, file integrity or boot validation. English pages use English UI captures or text-free artwork. [Chinese UI captures](screenshots.zh-CN.md) are kept separately.
 
 ## Check hardware information
@@ -37,3 +41,5 @@ Zero disks are selected. Candidate visibility is a separate check from cache sui
 ![Light and simulated dark appearance](../assets/chassis/transparent-light-dark.png)
 
 These are SVG renders with example selections, not live telemetry. The dark view uses simulated theme rules. Follow the [chassis guide](12-custom-chassis-display.md) to calibrate ports and trays, install adapted resources and verify actual QTS pages.
+
+**Related:** [reference results](case-study.md) · [Chinese UI gallery](screenshots.zh-CN.md).

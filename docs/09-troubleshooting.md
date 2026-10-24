@@ -1,5 +1,9 @@
 # 9. Troubleshooting
 
+[Task index](../README.md#read-in-this-order)
+
+Use the symptom table while following your selected route. If disk identity or membership is uncertain, return to the [stop conditions](00-scope.md#stop-conditions) before changing anything.
+
 | Symptom | Likely cause / diagnostic check | Action / acceptance |
 |---|---|---|
 | Linux sees all disks; QTS scan lists them; installer sees no usable disks | HAL reverse mapping failed (`ret=-1`, port 0) behind PCI bridges | Add verified controller `DEV_PATH`; require per-disk return 0 and correct slot |
@@ -32,3 +36,5 @@ Use [hardware and application checks](07a-hardware-and-apps.md) for sensor fresh
 ## After a 5.2 → 6.1 change
 
 Consult the [6.1 compatibility findings](11-qts61-upgrade.md#5-compatibility-findings-and-fixes) for hard-coded kernel paths, Python runtime selection, the 21-second HAL startup, stale sensor cache and the native CPU widget. A missing old SVG is cosmetic; a failed reverse disk lookup is a storage gate. Do not resolve either by repeatedly initializing the old disks.
+
+**Resume only after the failed gate passes:** [bay mapping](05-bay-mapping.md#acceptance-table), [storage verification](06-migration.md#verify-storage-before-applications), or [boot acceptance](07-acceptance.md), as appropriate.

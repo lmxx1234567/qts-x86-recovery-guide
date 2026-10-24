@@ -1,6 +1,8 @@
 # Upgrade an existing installation to QTS 6.1
 
-[← Release choices](02a-release-tracks.md) · [Shared installation commands](10-command-walkthrough.md) · [Updates and rollback →](08-updates.md)
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** read [update gates and rollback](08-updates.md). For a new host, choose 6.1 in the [release guide](02a-release-tracks.md) and follow the [recovery route](../README.md#recover-a-disk-set-on-a-new-host).
 
 This chapter contains only the differences and the existing-installation branch. **New installation:** select the Beta variables and X73A profile in the shared walkthrough, complete its VM and physical gates, then recover the disk set using [chapter 6](06-migration.md). A preliminary 5.2 installation is not required for that path.
 
@@ -192,4 +194,4 @@ grep -E '^(CPUT_1|TEMP_1|FANR_1|FANR_2)[[:space:]]*=' /tmp/em/em_0.info
 
 Do not automatically raise thresholds or restart protection during high load. Keep existing thermal protection active while validating monitoring; policy changes need a separate hardware-specific plan.
 
-[← Release choices](02a-release-tracks.md) · [Shared installation commands](10-command-walkthrough.md) · [Updates and rollback →](08-updates.md)
+**After reconnecting the complete disk set:** follow [storage verification](06-migration.md#verify-storage-before-applications) and [independent-boot acceptance](07-acceptance.md). For a failure, use the [rollback boundary](#4-rollback-boundary) before attempting a downgrade.

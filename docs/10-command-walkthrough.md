@@ -1,5 +1,9 @@
 # Command walkthrough: from downloads to recovery
 
+[Task index](../README.md#read-in-this-order)
+
+**Companion to the [recovery route](../README.md#recover-a-disk-set-on-a-new-host):** use only the section for your current stage. Existing installations start with [update planning](08-updates.md); use the [6.1 upgrade branch](11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation) only for that family change.
+
 Build and validate a boot image, then install it on an explicitly identified boot SSD. Run it in order, reading each gate. Commands target a **disposable Linux x86-64 build machine**, then a **maintenance boot on the destination NAS**. Do not paste the entire page into a shell. Commands in different sections run on different machines.
 
 Both release tracks use this one walkthrough. First choose a track in [Release selection](02a-release-tracks.md), then use its variables below. The complete example uses the observed X77-derived DOM layout; the loader archive name does not select the QTS firmware family. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. The [reference results](case-study.md) describe the tested layouts; each new build must pass the runtime gates below.
@@ -9,6 +13,14 @@ Both release tracks use this one walkthrough. First choose a track in [Release s
 Read the stage guide for decisions and return here for the corresponding commands. Sections 1–6 build/test the disposable VM; sections 7–8 create/write a separate physical candidate; sections 9–10 validate recovery and permanent boot. Do not rerun creation commands over a saved VM or reuse an output directory after a failed build. Preserve it for diagnosis and start a fresh directory.
 
 Helper tests check offline behavior and syntax, not target-driver or storage compatibility. Complete the VM and hardware acceptance in chapters 3–7 before using original disks.
+
+| Current stage | Commands | Decision/acceptance guide |
+|---|---|---|
+| Prepare inputs and build the lab image | [Sections 1–5](#1-build-machine-and-directory-layout) | [Firmware inputs](02-firmware.md#build-inputs) |
+| Run the disposable VM | [Section 6](#6-run-the-disposable-qts-vm) | [VM gates](03-vm-validation.md#required-sequence) |
+| Build and install the physical candidate | [Sections 7–8](#7-build-the-physical-candidate-and-payload-iso) | [Physical installation](04-build-and-install.md), then [diagnostic mapping](05-bay-mapping.md#turn-the-inventory-into-a-tested-profile) |
+| Recover and check data | [Section 9](#9-first-storage-boot-access-and-verification-commands) | [Migration decision branch](06-migration.md#decide-before-clicking-anything) |
+| Verify permanent boot | [Section 10](#10-make-qts-the-default-and-test-without-media) | [Independent-boot acceptance](07-acceptance.md) |
 
 ## 1. Build machine and directory layout
 
@@ -463,3 +475,5 @@ efibootmgr -v
 ```
 
 Detach virtual CD, then reboot normally without manual menu selection. Confirm web/SSH, runtime version, every RAID member, tiers, volumes and files again. Record a full power-off/start separately if performed. Keep the off-device boot backup and independent data backup before considering updates.
+
+**Finish with:** the full [data and independent-boot acceptance](07-acceptance.md) checklist. [Optional configuration](../README.md#optional-configuration-after-recovery) comes after recovery/export.

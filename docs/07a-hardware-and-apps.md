@@ -1,8 +1,8 @@
 # 7a. Hardware presentation and cross-architecture apps
 
-<!-- stage-navigation -->
-[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Optional after:** [storage and independent-boot acceptance](07-acceptance.md). Choose a section for your symptom; these changes are not prerequisites for recovery.
 
 ## Before you start
 
@@ -236,8 +236,4 @@ Keep credentials out of commands, logs and screenshots. Use existing authorized 
 
 Reference-host live checks cover CPU/board/fan values, DIMM reporting, disk artwork and cache-candidate enumeration. Cache creation, ECC fault injection and thermal shutdown are not established by those checks. The repository tests use offline fixtures; final-package cold-boot and upgrade behavior require your own acceptance. See [reference results](case-study.md) for the boot/storage results separately.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Independent boot and acceptance](07-acceptance.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Updates and rollback →](08-updates.md)
-<!-- /stage-navigation -->
+**Related:** [custom chassis SVGs](12-custom-chassis-display.md) · [update and rollback checks](08-updates.md#persistent-adaptations-what-must-survive) · [troubleshooting](09-troubleshooting.md).

@@ -1,8 +1,8 @@
 # 5. Map every physical bay
 
-<!-- stage-navigation -->
-[← Previous: Build and install](04-build-and-install.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Recover the disk set →](06-migration.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Use this guide twice:** collect topology while preparing the [physical candidate](04-build-and-install.md#b-build-a-separate-physical-candidate), then validate the installed candidate in diagnostic boot. Keep the [disk identity worksheet](../templates/bay-map.example.csv) available.
 
 A working Linux driver and a successful QTS scan are necessary but insufficient. QTS HAL must resolve the same physical disk to the intended enclosure/slot in the reverse query too.
 
@@ -105,8 +105,4 @@ Physical positions 4/5 were not independently verified in this example; confirm 
 
 Correct HAL mapping did not fix the six-plus-two TS-877 drawing or the zero cache-port bitmap. See [eight-large-bay artwork](07a-hardware-and-apps.md#eight-large-bays-artwork-is-separate-from-disk-mapping) and [slot-based cache eligibility](07a-hardware-and-apps.md#ssd-cache-candidates-a-slot-capability-bitmap) for the separate verified fixes. Neither changes disk identity or authorizes reuse of a disk containing data.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Build and install](04-build-and-install.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Recover the disk set →](06-migration.md)
-<!-- /stage-navigation -->
+**After all mapping gates pass:** [recover the complete disk set](06-migration.md). If a gate fails, correct the profile and repeat diagnostics; do not initialize disks to continue.

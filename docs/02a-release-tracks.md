@@ -1,6 +1,8 @@
 # 2a. Choose QTS 5.2 stable or QTS 6.1 Beta
 
-[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** complete the [inventory and backup plan](01-inventory.md).
 
 Choose the release **before** extracting firmware or building a model profile. Both routes then follow the same [command walkthrough](10-command-walkthrough.md): obtain dependencies → extract payload → adapt the model → build → test VM → install boot SSD → verify bays → recover storage → accept an independent boot. You do not need to read two copies of those steps.
 
@@ -52,4 +54,4 @@ For a new installation, select one track and complete the shared walkthrough. Fo
 - **6.1:** select modules using `uname -r`; the old hard-coded 5.10 path no longer works. The new CPU widget already understands native CPU readings; preserve it. Python locations and HAL startup timing changed. See [6.1 findings](11-qts61-upgrade.md#5-compatibility-findings-and-fixes).
 - **Both:** optional sensor adaptation is board-specific. Never copy the case host's thermal shutdown thresholds, direct KCS addresses or synthetic VM readings into a different machine. Default boot and full storage acceptance are shared in [chapter 7](07-acceptance.md).
 
-[← Previous: Firmware and loader](02-firmware.md) · [Workflow index](../README.md#read-in-this-order) · [Next: VM validation →](03-vm-validation.md)
+**Next for a new host:** [Obtain and inspect the build inputs](02-firmware.md). For an existing installation, return to [update planning](08-updates.md#per-release-sequence).

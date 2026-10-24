@@ -1,5 +1,9 @@
 # Reference hardware and validation scope
 
+[Task index](../README.md#read-in-this-order)
+
+**Reference only:** use the [task index](../README.md#read-in-this-order) for procedures; this result summary is not an installation sequence.
+
 Use these results to choose a starting point, not as a compatibility list. Your own installation must pass the [acceptance checklist](../templates/acceptance.md). The reference recovery used a complete healthy disk set; it is not a repair recipe for missing members or damaged Qtier metadata.
 
 ## Hardware and storage layout
@@ -40,3 +44,5 @@ The two identical SSDs' physical 4/5 labels remained ambiguous; successful logic
 ## Apply the results
 
 Start with [inventory](01-inventory.md), build a [disposable VM](03-vm-validation.md), and validate [every bay](05-bay-mapping.md) before storage startup. After recovery, export data and test [independent boot](07-acceptance.md). Optional [hardware](07a-hardware-and-apps.md) and [chassis](12-custom-chassis-display.md) changes come last.
+
+**Related:** [preview gallery](screenshots.md) · [dependency sources](sources.md) · [acceptance checklist](../templates/acceptance.md).

@@ -1,8 +1,8 @@
 # 4. Build a boot SSD and use virtual CD
 
-<!-- stage-navigation -->
-[← Previous: VM validation](03-vm-validation.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Map every bay →](05-bay-mapping.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** pass [VM validation](03-vm-validation.md) and collect the [physical controller/port topology](05-bay-mapping.md#concrete-linux-topology-collection). For a working installation, start with [update planning](08-updates.md) instead of rebuilding from a fresh base.
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
@@ -66,8 +66,4 @@ A completed `dd` progress line is not acceptance. The following `cmp` must exit 
 
 **Exit condition:** written-range verification passes, the SSD boots without rescue media, and the physical diagnostic environment is available. Pool migration is a separate step; do not initialize original disks to get past a welcome page.
 
----
-
-<!-- stage-navigation -->
-[← Previous: VM validation](03-vm-validation.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Map every bay →](05-bay-mapping.md)
-<!-- /stage-navigation -->
+**Next:** run [per-bay diagnostic validation](05-bay-mapping.md#turn-the-inventory-into-a-tested-profile). Do not start normal QTS storage services until it passes.

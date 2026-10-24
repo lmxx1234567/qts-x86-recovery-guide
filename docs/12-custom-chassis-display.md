@@ -1,5 +1,9 @@
 # Customize the chassis preview
 
+[Task index](../README.md#read-in-this-order)
+
+**Optional after:** [storage acceptance](07-acceptance.md) and a verified [HAL bay map](05-bay-mapping.md#acceptance-table). For sensor/widget problems rather than drawings, use [hardware checks](07a-hardware-and-apps.md#cpu-motherboard-and-fan-readings).
+
 Use a chassis drawing that matches your enclosure without changing the NAS model, network configuration or disk enumeration. This guide covers an **eight-bay enclosure with an ASRock Rack X570D4U-2L2T**, using the **TS-873A profile on QTS 6.1.0, build 20261007**. Complete storage recovery and verify the disks before making cosmetic changes.
 
 The example provides eight front trays, power/reset buttons, two vertical front USB sockets and a rear panel with four business LAN ports. The dedicated IPMI connector remains separate. Four rear expansion covers describe the enclosure; the motherboard itself has three PCIe slots.
@@ -94,3 +98,5 @@ To remove startup restoration, mount the configuration through the official QNAP
 ## Compatibility scope
 
 This example was checked on the stated QTS build for live resource delivery, native slot-protocol behavior and an installed guard's idempotent execution. Physical reboot and firmware-upgrade persistence are not covered by that validation. Use your own acceptance checks before relying on automatic restoration, and do not treat this configuration as a universal hardware profile.
+
+**After installation:** complete [preview and selection checks](#4-verify-the-result). Before firmware maintenance, review [restoration compatibility and rollback](#5-restore-after-startup-and-handle-updates) alongside [general update planning](08-updates.md).
