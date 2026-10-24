@@ -2,9 +2,9 @@
 
 Installation, troubleshooting and recovery milestones. Each caption identifies the stage and what the result establishes.
 
-## Custom chassis artwork — 2026-10-24
+## Custom chassis previews
 
-See the [display follow-up](12-custom-chassis-display.md#artwork-and-comparisons) for front/rear comparisons and light/dark effects. These are **offline SVG renders**, not live screenshots; dark theme rules and selections are test fixtures. Private mobile captures were not published.
+The [chassis guide](12-custom-chassis-display.md) includes equal-size front/rear comparisons and light/dark examples. These are SVG renders; selected ports and dark-theme rules illustrate appearance rather than live device status.
 
 ## Hardware and storage follow-up — 2026-10-18
 

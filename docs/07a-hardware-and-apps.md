@@ -15,9 +15,9 @@ These fixes were verified in the running system on 2026-10-18 and saved into its
 
 The 2026-10-20 follow-up repaired contention between native temperature/fan readers and revalidated continuous real values. That historical CPU90 policy was separately enabled on the case host. The later [6.1 follow-up](11-qts61-upgrade.md#5-compatibility-findings-and-fixes) records the final monitoring result and operator-selected CPU91 limit; neither threshold is a general hardware recommendation.
 
-## Later 6.1 chassis artwork
+## Custom enclosure previews
 
-The [2026-10-24 custom front/rear SVG follow-up](12-custom-chassis-display.md) replaces the TS-873A display resources and installs a separately approved autorun guard. It preserves native disk/network selection protocols and distinguishes user-confirmed from inferred port positions. Its installed-state checks do not establish reboot or firmware-update persistence.
+For a custom eight-bay enclosure on the TS-873A profile, follow the [chassis preview guide](12-custom-chassis-display.md). It covers artwork preparation, port and tray calibration, theme behavior, installation, verification and rollback without changing the hardware profile.
 
 ## CPU, motherboard and fan readings
 
