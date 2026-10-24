@@ -75,6 +75,10 @@ After reading scope and backup requirements, follow the [Linux command walkthrou
 
 For the full 5.2 → 6.1 experiment, the offline physical upgrade procedure, and release-specific pitfalls, see [QTS 6.1 upgrade and results](docs/11-qts61-upgrade.md).
 
+## Custom chassis display follow-up
+
+The [2026-10-24 display follow-up](docs/12-custom-chassis-display.md) adds transparent front/rear vector artwork, four adapter highlights with explicit mapping confidence, and a guarded autorun restore. Current HTTP delivery and installed-state no-op are verified; real reboot/update persistence is not yet tested.
+
 ## Repository contents
 
 - Detailed procedures and failure analysis, with hardware-specific observations clearly labeled.
