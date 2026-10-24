@@ -32,6 +32,20 @@ The front has power/reset buttons, two vertical USB sockets and eight trays. The
 
 Original vector design sources: [front](../assets/chassis/custom-front.svg), [rear](../assets/chassis/custom-rear.svg). These are **design sources**, not a universal drop-in QTS package: the deployed adaptation additionally preserves QTS slot IDs, wrapper groups and native style injection. Do not copy generic physical positions into another host's adapter/disk mapping.
 
+### Figure language and reproducibility
+
+All visible labels in these two figures are English, matching this document. The front/rear hardware SVGs contain no visible text. The figures are regenerated from vector inputs by [render_chassis_comparisons.py](../tools/render_chassis_comparisons.py), rather than editing text over an existing screenshot. Supply locally obtained original SVGs, reviewed adapted SVGs, and the original network CSS; vendor inputs remain private. The renderer requires Pillow and PyGObject/GdkPixbuf with SVG support. It never contacts or modifies a NAS.
+
+```sh
+python3 tools/render_chassis_comparisons.py \
+  --original-dir /path/to/local-original-layout \
+  --adapted-dir /path/to/reviewed-adapted-layout \
+  --network-css /path/to/local-style_layout.css \
+  --output-dir assets/chassis
+```
+
+The dark-theme rule remains an explicit fixture, and selections remain synthetic. Port confidence is unchanged: X550 positions are user-confirmed; i210 positions are inferred.
+
 ### Transparent interiors and theme behavior
 
 An initial full-canvas white rectangle looked wrong on the actual mobile disk page. A first correction removed only the surrounding rectangle but left a white chassis body. The accepted final correction removes that body and unnecessary fixed white fills as well. Static strokes no longer use inline hard-coded black colors in the QTS adaptation; native `.shape`, `.others`, `.off` and `.on` rules determine their appearance.
