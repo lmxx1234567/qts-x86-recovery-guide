@@ -6,7 +6,6 @@
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
-
 ## Select a family, not a CPU marketing name
 
 Choose [Track A: current QTS 5.2 stable or Track B: QTS 6.1 Beta](02a-release-tracks.md) before downloading. The original installation used TS-877 / TS-X77, QTS 5.2.10.3577 and kernel 5.10.60-qnap; the later physical upgrade used TS-873A / TS-X73A, QTS 6.1.0.3640 and kernel 6.6.129-qnap. These are tested observations, not permanent version pins. Check current security advisories and download availability at the [official download center](https://www.qnap.com/en/download).
@@ -25,7 +24,7 @@ A QNAP firmware `.img` inside a download ZIP is an **update package**, not a raw
 
 For current stable/Beta URLs and the exact shell variables used by both routes, use [Release selection](02a-release-tracks.md). The older links below explain the initial experiment; they are not the latest stable selection.
 
-These are the specific inputs used in the experiment, not a compatibility guarantee for other hardware or a recommendation to use an older release.
+Use these older inputs only when reproducing the reference validation; they are not a recommendation to stay on an older release.
 
 | Input | Download | Contents and role |
 | --- | --- | --- |
@@ -44,7 +43,7 @@ unzip -l TS-X77_20260731-5.2.10.3577.zip
 unzip TS-X77_20260731-5.2.10.3577.zip -d firmware-5.2.10.3577
 ```
 
-The resulting `.img` still needs the firmware extraction procedure in the [command walkthrough](10-command-walkthrough.md). It is **not** the raw DOM image to write to an SSD. Both official ZIP URLs returned HTTP 200 when checked on 2026-10-19; future availability and community download permissions may change.
+The resulting `.img` still needs the firmware extraction procedure in the [command walkthrough](10-command-walkthrough.md). It is **not** the raw DOM image to write to an SSD. Verify download availability and provenance before building.
 
 ## Build inputs
 

@@ -1,51 +1,42 @@
-# Case study: one successful x86 Qtier recovery
+# Reference hardware and validation scope
 
-## Later 6.1 milestone (2026-10-22)
+Use these results to choose a starting point, not as a compatibility list. Your own installation must pass the [acceptance checklist](../templates/acceptance.md). The reference recovery used a complete healthy disk set; it is not a repair recipe for missing members or damaged Qtier metadata.
 
-The same physical build subsequently moved from X77/5.2 to X73A/6.1.0.3640, kernel 6.6.129-qnap. Its complete original five-disk Qtier set returned with both RAID tiers and volumes Ready. The VM native-update test, physical offline boot-image upgrade, monitoring repair and their limits are documented together in [QTS 6.1 upgrade and results](11-qts61-upgrade.md). The narrative below describes the original 5.2 recovery, not the later upgrade.
+## Hardware and storage layout
 
-
-Recorded 2026-10-17–18. Identifying information is removed. This is one measured setup, not a support matrix.
-
-| Component | Observed setup |
+| Component | Reference configuration |
 |---|---|
-| Host | ASRock Rack X570D4U-2L2T, Ryzen 5800X, 64 GiB RAM |
-| QTS profile | TS-877 / TS-X77 |
-| Firmware | QTS 5.2.10.3577 build 20260731, kernel 5.10.60-qnap |
-| Boot medium | Samsung 980 500 GB NVMe, dedicated boot/firmware role |
-| Original Qtier set | 2 × 4 TB SATA SSD RAID1, 3 × 8 TB SATA HDD RAID5 |
-| Other disks | Three unrelated ZFS disks; not selected for QTS configuration |
-| Bay map | Eight populated positions, all HAL reverse queries successful after DEV_PATH fix |
+| Board / CPU / memory | ASRock Rack X570D4U-2L2T, Ryzen 5800X, 64 GiB ECC UDIMM |
+| Dedicated boot | Samsung 980 500 GB NVMe; boot/firmware only |
+| Original Qtier set | Two 4 TB SATA SSDs in RAID1 and three 8 TB SATA HDDs in RAID5 |
+| Other storage | Three unrelated disks, excluded from QTS pool configuration |
+| Bays | Eight populated SATA positions with successful HAL reverse queries |
+| 5.2 baseline | TS-877 / TS-X77, 5.2.10.3577 build 20260731, kernel 5.10.60-qnap |
+| 6.1 baseline | TS-873A / TS-X73A, 6.1.0.3640 build 20261007, kernel 6.6.129-qnap |
 
-## Sequence and result
+The two identical SSDs' physical 4/5 labels remained ambiguous; successful logical HAL queries do not resolve that physical-label uncertainty. Re-establish each position from labels/cables on your hardware.
 
-1. Explored shared boot/data space on a single SSD in disposable VMs. Abandoned that requirement when the tail mapping did not become a usable data disk.
-2. Validated dedicated virtual NVMe boot plus separate virtual SATA data storage, initialization, official firmware upgrade and repeated cold starts.
-3. Built a hardware-specific boot image and wrote only the explicitly identified, erasable boot NVMe. Used BMC virtual CD for maintenance.
-4. Inventoried original disks and metadata before normal storage startup. Correct scan order initially concealed broken HAL reverse lookup.
-5. Added full controller paths. All eight reverse queries returned success; physical 4/5 identification retained a documented inference from partially covered labels.
-6. Booted normal QTS. Old configuration and storage returned automatically; no manual initialize/attach operation was used.
-7. Restored management access at the old custom port. A legacy LACP/MTU configuration required separate network interpretation; DNS and external HTTPS worked.
-8. Set normal QTS in GRUB and QTS first in UEFI BootOrder, detached virtual CD, then verified an unattended reboot.
+## Validated results
 
-## Final observed state
+| Area | Result | Scope |
+|---|---|---|
+| 5.2 lab | Native 5.1.6 → 5.2.10 update, initialization and repeated disk-only cold starts; 1 MiB file hash retained | Disposable VM |
+| 6.1 lab | Same-family X73A 5.2.10 → 6.1 update and disk-only cold start; 32 MiB file hash retained | Disposable static volume, not Qtier |
+| Boot preservation | Examined updates retained EFI/GRUB/support files and layout; both firmware slots changed | Exact tested builds and base layout |
+| Physical 5.2 recovery | Old configuration returned automatically; complete SSD RAID1 and HDD RAID5, both volumes accessible; unattended reboot passed | No manual initialize or attach action |
+| Physical 6.1 migration | Offline boot-image family change with SATA disconnected, followed by recovery of the same five-disk pool | Not an online native cross-family update |
+| Qtier | 18.17 TB pool; 3.63 TB SSD tier and 14.54 TB HDD tier, Ready/Idle with automatic tiering | Status and sample readability checks |
+| Hardware | CPU, motherboard and fan readings; 64 GiB/four-slot memory report; eight-bay artwork and cache candidates | Live checks, not thermal shutdown, ECC injection or cache-operation tests |
+| Custom chassis | Transparent front/rear SVG delivery, native slot-protocol checks and guard idempotence | Current-state checks; startup/update persistence needs acceptance |
 
-- SSD RAID1: 2/2 members, `[UU]`; HDD RAID5: 3/3, `[UUU]`; no rebuild pending.
-- Pool Ready, 18.17 TB reported total; Qtier Idle with Automatic Data Tiering.
-- SSD tier 3.63 TB, 29.7% used; HDD tier 14.54 TB, 64.2% used.
-- System DataVol1 Ready; DataVol2 at 80.07% had a capacity threshold warning, not degraded RAID.
-- Both volumes mounted and existing shares/directories were accessible. Several full-file SHA-256 reads succeeded.
+## Boundaries that matter for recovery
 
-## Limits of the evidence
+- No pre-migration hash baseline exists for the sampled physical files. The 5.2 full-file reads and 6.1 partial reads establish readability, not a complete integrity comparison.
+- Physical unattended reboot was tested for the original storage setup. The final monitoring/chassis packages were checked live and offline; their complete cold-boot and firmware-upgrade paths are outside that validation.
+- Scheduled automatic firmware installation, boot-SSD tail as data storage and future releases are unvalidated. Use [per-release gates](08-updates.md) before changing versions.
+- Unrelated disks were not selected for QTS configuration, but an intermediate boot into their previous OS could have imported them. Disconnect unrelated storage when possible; do not infer zero writes from an unselected QTS disk list.
+- ARM app directories surviving recovery do not prove x86 app compatibility. Preserve data and follow the [application inventory procedure](07a-hardware-and-apps.md#arm64-apps-preserve-data-inventory-before-cleanup).
 
-No pre-switch hash baseline existed for the sampled real files, so unchanged data is not proven by those reads. No full surface/data-integrity audit or physical post-migration tier-promotion benchmark was performed. A previous independent virtual Qtier experiment must not be conflated with this physical recovery.
+## Apply the results
 
-No manual QTS formatting/configuration targeted the unrelated ZFS disks. An intermediate normal boot into the previous OS could have auto-imported them, so we do not claim zero disk writes. Physical unattended reboot and VM cold starts are distinct results. Future upgrades, other controllers, motherboard/fan integration and the boot SSD tail as data storage remain unverified. CPU and SATA disk temperature display was subsequently verified as described below.
-
-## Later hardware and app follow-up (2026-10-18)
-
-The [follow-up procedure](07a-hardware-and-apps.md) repaired CPU temperature display, the 64 GiB/four-slot memory report, the front eight-large-bay preview, and the slot 1–8 SSD-cache eligibility bitmap. QTS displayed both 32 GiB ECC UDIMMs and all eight disk temperatures. Board temperature remained Not Supported; DIMM manufacturer remained Unknown in QTS. No cache was created.
-
-A read-only app audit found 18 unregistered directories (10.25 GiB), with 1.44 GiB of ARM64 ELF files. App data and binaries were retained; container-layer ARM64 content was tracked separately. This establishes leftover candidates, not that every directory was a previously enabled app.
-
-The revised overlay was saved with a rollback copy and readback hash check. The artwork helper passed a live test, and md1/md2 remained complete. **No reboot was performed after these hardware changes.** These follow-up checks do not replace post-change boot validation.
+Start with [inventory](01-inventory.md), build a [disposable VM](03-vm-validation.md), and validate [every bay](05-bay-mapping.md) before storage startup. After recovery, export data and test [independent boot](07-acceptance.md). Optional [hardware](07a-hardware-and-apps.md) and [chassis](12-custom-chassis-display.md) changes come last.

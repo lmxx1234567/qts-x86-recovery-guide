@@ -1,8 +1,8 @@
 # QTS on generic x86: installation and data recovery
 
-An evidence-based field guide to booting QTS on non-QNAP x86 hardware and recovering an existing QNAP disk set, including a real Qtier migration.
+A practical guide to booting QTS on non-QNAP x86 hardware and recovering an existing QNAP disk set, including a real Qtier migration.
 
-[中文入口](README.zh-CN.md) · [Screenshot journal](docs/screenshots.md) · [Verified case](docs/case-study.md) · [Troubleshooting](docs/09-troubleshooting.md)
+[中文入口](README.zh-CN.md) · [Preview gallery](docs/screenshots.md) · [Verified case](docs/case-study.md) · [Troubleshooting](docs/09-troubleshooting.md)
 
 **This is a recovery engineering guide, not a universal installer or an officially supported QNAP migration destination.** Start with copies of your disks when possible. A normal QTS boot can write to attached disks before you click anything. If the data is irreplaceable and members are failing, stop experiments on the originals and arrange recovery imaging.
 
@@ -15,11 +15,11 @@ An evidence-based field guide to booting QTS on non-QNAP x86 hardware and recove
 
 Both routes use **one [step-by-step command walkthrough](docs/10-command-walkthrough.md)**. Choose firmware/profile variables once; extraction, image construction, VM testing, installation, bay mapping and storage recovery are shared. Newer releases must pass the same gates—“latest available” does not mean “tested here.” Already running custom QTS 5.2? Use the [existing-installation upgrade branch](docs/11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation).
 
-## The build: a Ryzen-powered QTS NAS
+## Reference hardware
 
 **8 cores / 16 threads · 64 GiB ECC memory · 8 SATA bays · recovered SSD + HDD Qtier**
 
-The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the original tiered storage back online. The original installation used TS-877/X77; the later 6.1 upgrade uses TS-873A/X73A on the same hardware. This is a custom build, not a factory QNAP appliance or a benchmark claim.
+The reference build runs the QTS desktop on a Ryzen 7 5800X with the original tiered storage available. The original installation used TS-877/X77; the later 6.1 upgrade uses TS-873A/X73A on the same hardware. This is a custom build, not a factory QNAP appliance or a benchmark claim.
 
 | Component | This build |
 |---|---|
@@ -29,13 +29,13 @@ The payoff: the familiar QTS desktop running on a Ryzen 7 5800X, with the origin
 | Bays | Eight mapped SATA positions, with an eight-large-bay front preview |
 | Recovered Qtier | 2 × 4 TB SSD RAID1 + 3 × 8 TB HDD RAID5; QTS reports an 18.17 TB pool |
 | Dedicated boot | Samsung 980 500 GB NVMe |
-| Monitoring | CPU, motherboard temperature and two fan readings validated after the 6.1 follow-up; thermal policy is host-specific |
+| Monitoring | CPU, motherboard temperature and two fan readings; validate sensor mapping for your board |
 
 ![Ryzen 5800X, 64 GB ECC memory and temperatures](assets/screenshots/hardware-status-native-en.jpg)
 
-*The screenshot above records the original 5.2 hardware page. The later [6.1 results](docs/11-qts61-upgrade.md) include recovered storage and repaired motherboard/fan monitoring. Final monitoring persistence has not yet been retested by a physical cold boot.*
+*QTS 5.2 hardware view. The System temperature field predates the board-sensor adaptation; see [monitoring setup](docs/07a-hardware-and-apps.md#cpu-motherboard-and-fan-readings) for current guidance.*
 
-## What worked
+## Expected result
 
 A dedicated NVMe SSD booted through UEFI → GRUB → the QTS kernel and initramfs, with a small hardware adaptation overlay. Five original QNAP disks then recovered their old configuration and Qtier pool: two SSDs in RAID1 plus three HDDs in RAID5. All eight configured bays passed HAL identity/slot checks. A reboot with virtual CD detached reached QTS automatically; the pool, both data volumes and sample files were readable.
 
@@ -73,7 +73,7 @@ After reading scope and backup requirements, follow the [Linux command walkthrou
 | 7a | [Hardware display and apps](docs/07a-hardware-and-apps.md) | CPU/DIMMs, artwork, cache eligibility and app inventory checked independently |
 | 8 | [Updates and rollback](docs/08-updates.md) | Each proposed version tested before production use |
 
-For the full 5.2 → 6.1 experiment, the offline physical upgrade procedure, and release-specific pitfalls, see [QTS 6.1 upgrade and results](docs/11-qts61-upgrade.md).
+For an existing installation, follow the offline upgrade procedure and compatibility checks in [Upgrade to QTS 6.1](docs/11-qts61-upgrade.md).
 
 ## Match the preview to your enclosure
 
@@ -93,7 +93,7 @@ Run the offline tool tests with Python 3.9+: `python3 -m unittest discover -s te
 
 ![Recovered Qtier pool](assets/screenshots/qtier-native-en.jpg)
 
-The SSD RAID1 and HDD RAID5 tiers remain present after the hardware follow-up. See the original [5.2 unattended-reboot results](docs/screenshots.md#qtier-after-default-reboot) and the later [6.1 physical recovery](docs/11-qts61-upgrade.md#1-what-actually-ran). These are separate validation milestones.
+The reference pool contains both the SSD RAID1 and HDD RAID5 tiers. See the [reference results and validation scope](docs/case-study.md), and use the [acceptance checklist](templates/acceptance.md) for your own installation.
 
 ## What this does not promise
 
@@ -101,6 +101,6 @@ One successful host is not a hardware compatibility list. Driver availability, H
 
 For supported appliance-to-appliance migration, check [QNAP's migration compatibility tool](https://www.qnap.com/en/nas-migration). For uncertain or damaged pools, prefer recovering files to another device over making the pool boot in place.
 
-The [walkthrough usage notes](docs/10-command-walkthrough.md#how-to-use-this-walkthrough) distinguish offline checks from the VM and physical validation you must perform. Hardware display and app customization in stage 7a are optional follow-up work after recovering and exporting data.
+The [walkthrough usage notes](docs/10-command-walkthrough.md#how-to-use-this-walkthrough) distinguish offline checks from the VM and physical validation you must perform. Hardware display and app customization in stage 7a are optional work after recovering and exporting data.
 
 Contributions with reproducible, sanitized results are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [sources](docs/sources.md).

@@ -4,11 +4,9 @@
 [← Previous: Choose a release](02a-release-tracks.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
 <!-- /stage-navigation -->
 
-Use the selected stable/Beta variables from [release selection](02a-release-tracks.md). The later [6.1 experiment](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm) adds an actual native TS-X73A 5.2→6.1 update and cold start; it does not replace these common storage and boot gates.
-
+Use the selected stable/Beta variables from [release selection](02a-release-tracks.md). The [6.1 VM update procedure](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm) adds an actual native TS-X73A 5.2→6.1 update and cold start; it does not replace these common storage and boot gates.
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
-
 
 Use an isolated VM before attaching original disks. The case used 2 vCPUs, 8 GiB RAM, a 64 GiB virtual NVMe boot disk and a new 256 GiB SATA data disk, with autostart disabled and no physical passthrough. Use a private network to avoid duplicate source IPs/hostnames.
 
@@ -50,12 +48,12 @@ QTS 5.1.6.2722 build 20240402 → 5.2.10.3577 build 20260731 succeeded through t
 
 The EFI directory acquired additional official files. Existing EFI executable and GRUB configuration hashes stayed the same. Whole-filesystem hashes can change because of metadata even if all relevant files are identical. Compare both file manifests and geometry.
 
-## Lessons
+## Troubleshoot failed validation
 
 - In the tested TrueNAS configuration, `UEFI_CSM` actually took the legacy boot path. Select and verify UEFI rather than trusting a label.
 - Using a bounded device-mapper view did not by itself remove the underlying NVMe from the installer. Verify the actual installer disk list.
 - Treating the remaining SSD tail as a FLASH data device failed to produce a usable data disk. The final design uses a separate data pool.
-- An initial update failed with FW004 because staging under `/mnt/HDA_ROOT` ran out of space. Retrying on a real data volume with sufficient space succeeded. FW004 can have other causes; inspect logs.
+- For FW004, inspect the update log and free staging space. Staging under `/mnt/HDA_ROOT` can be too small; use a verified test-data volume with enough space. The code can have other causes.
 
 ---
 

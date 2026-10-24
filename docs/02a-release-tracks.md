@@ -31,7 +31,7 @@ The original X77 loader archive is still the **boot-layout base** for both refer
 4. Set the walkthrough's `FW_FAMILY`, `FW_BUILD`, `FW_VERSION` and `MODEL_TRACK` to that selection. Do not change a filename alone or mix extracted payload from older builds.
 5. Repeat VM upgrade/initialization, disk-only cold boot, HAL reverse lookup and file-hash checks. A newer version is **unvalidated** until these pass; no script in this repository guarantees future firmware compatibility.
 
-A dated feed can lag, have model-specific rollout rules, or use a misleading path name: the observed 6.1 Beta was advertised in `QTS_FW_5.2.0_beta.xml`. An HTTP 403 from a guessed `QTS_FW_6.1.0.xml` is not proof that no Beta is available. Do not rewrite QTS update URLs to force a release.
+A dated feed can lag, have model-specific rollout rules, or use a misleading path name: the observed 6.1 Beta was advertised in `QTS_FW_5.2.0_beta.xml`. Use the model-specific Download Center rather than guessing feed URLs. Do not rewrite QTS update URLs to force a release.
 
 ## What differs in the model
 

@@ -8,7 +8,7 @@
 
 | Source | Applicability |
 |---|---|
-| QTS, Linux MD/LVM/ext4, including Qtier | The workflow studied here; exact compatibility must still be tested |
+| QTS, Linux MD/LVM/ext4, including Qtier | Covered by this guide; validate the exact source and destination |
 | QuTS hero / ZFS | Different recovery stack; do not apply the QTS Qtier assembly procedure |
 | QuTScloud | Different product and licensing/deployment model; not a substitute firmware image |
 | Legacy static volume or encrypted volume | Inventory its actual layout and keys; this Qtier case does not validate it |
@@ -16,11 +16,9 @@
 
 The goal is access to data. Keeping QTS as a permanent operating system is optional. If a supported replacement QNAP is available, evaluate that route first. If only file extraction is needed, a controlled recovery environment and a separate destination may be preferable.
 
-## Evidence vocabulary
+## Use the examples safely
 
-- **Observed:** actually seen in this case or its disposable VM.
-- **Procedure:** recommended next steps for a different machine; not proof they will work there.
-- **Unverified:** explicitly outside the measured result.
+The [reference results](case-study.md) describe one tested build. Procedures and example profiles still need the runtime checks specified in each chapter. Treat any unverified feature as unavailable until you test it.
 
 Generic means the method is portable: inventory, adapt, test, recover, verify. It does not mean the sample PCI paths, model profile, disk geometry or firmware can be copied to every x86 machine.
 

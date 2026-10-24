@@ -77,11 +77,13 @@ The guard should wait for resources without blocking startup, do nothing when th
 After an upgrade, an unfamiliar firmware, frontend or SVG must **stop restoration rather than be overwritten**. The new vendor artwork can remain active until you review and adapt it. Inspect the guard's status before changing its baseline:
 
 ```sh
-sudo cat <runtime-directory>/STATUS.txt
-sudo /bin/sh <runtime-directory>/guard.sh --check
+RUNTIME_DIR=/REPLACE/PROTECTED/runtime
+case "$RUNTIME_DIR" in *REPLACE*) echo "Set your installation directory first"; exit 1;; esac
+sudo cat "$RUNTIME_DIR/STATUS.txt"
+sudo /bin/sh "$RUNTIME_DIR/guard.sh" --check
 ```
 
-Replace the placeholder with your protected installation directory. `OK_ALREADY_APPLIED` means no replacement was needed; `STOP_NEEDS_REVIEW` means inspect the reported mismatch. Do not approve a new version simply to silence the check. Recheck the native IDs, styles, interactions and rollback copy first.
+Set `RUNTIME_DIR` to your protected installation directory. `OK_ALREADY_APPLIED` means no replacement was needed; `STOP_NEEDS_REVIEW` means inspect the reported mismatch. Do not approve a new version simply to silence the check. Recheck the native IDs, styles, interactions and rollback copy first.
 
 ### Roll back or remove restoration
 

@@ -1,14 +1,14 @@
 # Command walkthrough: from downloads to recovery
 
-This fills the operational gaps between the conceptual chapters. Run it in order, reading each gate. Commands target a **disposable Linux x86-64 build machine**, then a **maintenance boot on the destination NAS**. Do not paste the entire page into a shell. Commands in different sections run on different machines.
+Build and validate a boot image, then install it on an explicitly identified boot SSD. Run it in order, reading each gate. Commands target a **disposable Linux x86-64 build machine**, then a **maintenance boot on the destination NAS**. Do not paste the entire page into a shell. Commands in different sections run on different machines.
 
-Both release tracks use this one walkthrough. First choose a track in [Release selection](02a-release-tracks.md), then use its variables below. The complete example uses the observed X77-derived DOM layout; the loader archive name does not select the QTS firmware family. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. This command transcription and the new image helper have offline tests; the whole sequence has **not** been freshly rerun on physical hardware. The earlier installation/VM results are described separately in the case study.
+Both release tracks use this one walkthrough. First choose a track in [Release selection](02a-release-tracks.md), then use its variables below. The complete example uses the observed X77-derived DOM layout; the loader archive name does not select the QTS firmware family. Other hardware needs its own driver/HAL profile; other loader layouts need a reviewed adaptation of the partition steps. The [reference results](case-study.md) describe the tested layouts; each new build must pass the runtime gates below.
 
 ## How to use this walkthrough
 
 Read the stage guide for decisions and return here for the corresponding commands. Sections 1–6 build/test the disposable VM; sections 7–8 create/write a separate physical candidate; sections 9–10 validate recovery and permanent boot. Do not rerun creation commands over a saved VM or reuse an output directory after a failed build. Preserve it for diagnosis and start a fresh directory.
 
-Offline checks cover helper behavior, local links and shell syntax. The retained firmware extraction was compared byte-for-byte with the case payload, and the original base image was inspected without modification. These checks do not execute QTS, establish driver compatibility or validate a new machine's storage. The standalone command transcription has not been freshly rerun end-to-end on hardware; follow each runtime gate in chapters 3–7.
+Helper tests check offline behavior and syntax, not target-driver or storage compatibility. Complete the VM and hardware acceptance in chapters 3–7 before using original disks.
 
 ## 1. Build machine and directory layout
 
@@ -65,7 +65,7 @@ sha256sum "private/input/$FW_STEM.zip" > private/downloads.sha256
 wc -c "private/input/$FW_STEM.zip"
 ```
 
-Keep this shell open, or inspect and `source private/release.env` when returning. Use a separate checkout/work directory for each track; do not combine unpacked payloads. For the tested 5.2-to-6.1 **VM update** route, build TS-X73A 5.2.10.3577 / 20260731 with `MODEL_TRACK=x73a` first; see [the update experiment](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm). A fresh Beta installation can start directly from the Beta block.
+Keep this shell open, or inspect and `source private/release.env` when returning. Use a separate checkout/work directory for each track; do not combine unpacked payloads. For the tested 5.2-to-6.1 **VM update** route, build TS-X73A 5.2.10.3577 / 20260731 with `MODEL_TRACK=x73a` first; see [the VM update procedure](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm). A fresh Beta installation can start directly from the Beta block.
 
 A locally computed hash is an identity record, not authentication. Use the publisher's signature/checksum verification instructions too. If the historical package is unavailable, do not silently substitute another family/build: restart the version-validation gate.
 
@@ -83,7 +83,7 @@ sha256sum private/pc1.c
 less private/pc1.c
 ```
 
-The examined source reads four bytes into a `long`. The local experiment initialized that variable to avoid an uninitialized upper half on a 64-bit platform. Apply the narrowly checked edit only if the reviewed source matches:
+The examined source reads four bytes into a `long`. Initialize that variable to avoid an uninitialized upper half on a 64-bit platform. Apply the narrowly checked edit only if the reviewed source matches:
 
 ```bash
 python3 - <<'PY'
@@ -285,7 +285,7 @@ Any missing file or mismatch blocks installation. A whole-image hash identifies 
 
 ## 6. Run the disposable QTS VM
 
-Use [VM validation](03-vm-validation.md) for the full acceptance sequence. The following launch reproduces the case's PCI device addresses on a standalone Linux QEMU i440fx machine; it is a command translation, not a new validated hypervisor matrix.
+Use [VM validation](03-vm-validation.md) for the full acceptance sequence. The following launch reproduces the case's PCI device addresses on a standalone Linux QEMU i440fx machine; validate the generated topology before initializing even the test disk.
 
 ```bash
 mkdir -p private/vm
