@@ -1,8 +1,8 @@
 # 0. Scope and recovery decisions
 
-<!-- stage-navigation -->
-[← Project overview](../README.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Inventory and backup →](01-inventory.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+Start here for a new recovery. For a working installation, use [update planning](08-updates.md) instead.
 
 ## Identify the storage family first
 
@@ -30,8 +30,4 @@ Record physical bay, immutable drive identity (serial/WWN), and OS device path s
 
 Stop before normal QTS storage startup if a member is missing, serials do not match, HAL reverse lookup fails, or a recovery dialog proposes initialization. Stop after startup if the wrong disks appear in the pool, a rebuild starts unexpectedly, tier membership differs, or encrypted data cannot be unlocked with known keys. Preserve logs and return to copies; do not improvise `mdadm --create`, `--force`, `pvcreate`, `vgcfgrestore` or filesystem repair on originals.
 
----
-
-<!-- stage-navigation -->
-[← Project overview](../README.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Inventory and backup →](01-inventory.md)
-<!-- /stage-navigation -->
+**Next:** [Inventory the complete disk set and prepare recovery copies](01-inventory.md).

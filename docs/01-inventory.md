@@ -1,8 +1,8 @@
 # 1. Inventory, copies and recovery baseline
 
-<!-- stage-navigation -->
-[← Previous: Scope and decisions](00-scope.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Firmware and loader →](02-firmware.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** identify the [storage family and stop conditions](00-scope.md).
 
 ## Before removing disks from the source
 
@@ -42,8 +42,4 @@ A GPT backup or copies of the first few GiB are **not a data backup**. Metadata-
 
 If the old system is readable, hash representative files before shutdown. Use the same relative paths after recovery and compare size and SHA-256. Read large files and examples from every volume; check ACLs and application-specific data separately. A hash first computed after migration proves readability, not unchanged data.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Scope and decisions](00-scope.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Firmware and loader →](02-firmware.md)
-<!-- /stage-navigation -->
+**Next:** [Choose a release](02a-release-tracks.md), then review its firmware and loader dependencies.

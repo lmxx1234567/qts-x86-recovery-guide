@@ -53,31 +53,49 @@ flowchart LR
   P --> V[Qtier pool, system volume and shares]
 ```
 
-## Start here: executable walkthrough
-
-After reading scope and backup requirements, follow the [Linux command walkthrough](docs/10-command-walkthrough.md). It supplies dependency installation, firmware extraction, image construction/readback, a disposable QEMU launch, payload ISO creation, explicit-target boot SSD writing, and post-migration checks. The commands distinguish VM and physical profiles; original data disks are never installation targets.
-
 ## Read in this order
 
-| Stage | Guide | Exit condition |
+Choose the route for your current task. Chapter numbers identify documents; optional chapters are not additional recovery requirements.
+
+| Your task | Start here | Continue with |
 |---|---|---|
-| 0 | [Scope and decisions](docs/00-scope.md) | Correct OS/storage family identified |
-| 1 | [Inventory and backup](docs/01-inventory.md) | Every member identified; recovery copy/backup strategy recorded |
-| 2 | [Firmware and loader](docs/02-firmware.md) | Provenance, exact versions and boot dependencies recorded |
-| 2a | [Choose a release](docs/02a-release-tracks.md) | Stable/Beta family, exact package and validation limits selected |
-| 3 | [VM validation](docs/03-vm-validation.md) | Initialize disposable disks, update and cold-boot successfully |
-| 4 | [Build and install](docs/04-build-and-install.md) | Verified image on the intended dedicated boot SSD |
-| 5 | [Map every bay](docs/05-bay-mapping.md) | Scan **and** per-disk HAL reverse lookup pass |
-| 6 | [Recover the disk set](docs/06-migration.md) | Correct pool, tiers, RAID groups and volumes recovered |
-| 7 | [Independent boot and acceptance](docs/07-acceptance.md) | No CD/BootNext dependency; data checks recorded |
-| 7a | [Hardware display and apps](docs/07a-hardware-and-apps.md) | CPU/DIMMs, artwork, cache eligibility and app inventory checked independently |
-| 8 | [Updates and rollback](docs/08-updates.md) | Each proposed version tested before production use |
+| Recover an existing QNAP disk set on a new x86 host | [Recovery route below](#recover-a-disk-set-on-a-new-host) | Complete the storage and independent-boot gates before optional changes |
+| Upgrade an already working custom QTS installation | [Updates and rollback](docs/08-updates.md#per-release-sequence) | For X77 → X73A / 6.1, use [the existing-installation branch](docs/11-qts61-upgrade.md#3-upgrade-an-existing-custom-qts-installation), not the clean-install recipe |
+| Fix hardware reporting, apps or enclosure previews | [Optional configuration](#optional-configuration-after-recovery) | Choose only the relevant guide after storage acceptance and data export |
 
-For an existing installation, follow the offline upgrade procedure and compatibility checks in [Upgrade to QTS 6.1](docs/11-qts61-upgrade.md).
+### Recover a disk set on a new host
 
-## Match the preview to your enclosure
+Use the [command walkthrough](docs/10-command-walkthrough.md#how-to-use-this-walkthrough) alongside these decision guides. It supplies commands at each stage, not an extra stage to repeat afterward.
 
-Use the [custom chassis preview guide](docs/12-custom-chassis-display.md) to prepare front/rear artwork, calibrate port and tray highlights, verify light/dark rendering, and plan guarded restoration with a safe rollback path.
+| Order | Read and act | Gate before continuing |
+|---|---|---|
+| 1 | [Scope](docs/00-scope.md) → [inventory and backup](docs/01-inventory.md) | Correct storage family, complete disk identities and recovery copies |
+| 2 | [Choose a release](docs/02a-release-tracks.md) → [firmware and loader requirements](docs/02-firmware.md) | Exact package/profile and reviewed build inputs |
+| 3 | [Build and validate the disposable VM](docs/03-vm-validation.md#build-and-start-the-lab-in-order), using [walkthrough sections 1–6](docs/10-command-walkthrough.md#1-build-machine-and-directory-layout) | Initialization, test-file reads, update and disk-only cold start pass |
+| 4 | [Collect physical topology](docs/05-bay-mapping.md#concrete-linux-topology-collection), then [build/install a separate physical candidate](docs/04-build-and-install.md#b-build-a-separate-physical-candidate) | Correct dedicated boot SSD written and read back; diagnostic boot available |
+| 5 | [Validate every bay](docs/05-bay-mapping.md#turn-the-inventory-into-a-tested-profile) | Physical identities, HAL scan and each reverse lookup agree; no normal storage startup yet |
+| 6 | [Recover the complete disk set](docs/06-migration.md#decide-before-clicking-anything) | Correct pool, RAID members, Qtier tiers, volumes and file reads |
+| 7 | [Independent boot and acceptance](docs/07-acceptance.md) | Data export, permanent boot defaults and post-boot storage checks recorded in the [acceptance checklist](templates/acceptance.md) |
+
+The physical topology feeds the candidate profile **before** installation; the full HAL mapping check runs in diagnostics **after** installation. If it fails, correct the candidate and repeat diagnostics before proceeding to recovery.
+
+### Optional configuration after recovery
+
+| Task | Relevant guide |
+|---|---|
+| CPU, motherboard/fan readings or memory reporting | [Hardware checks](docs/07a-hardware-and-apps.md#before-you-start) |
+| Missing cross-architecture applications | [Preserve and inventory app data](docs/07a-hardware-and-apps.md#arm64-apps-preserve-data-inventory-before-cleanup) |
+| Missing SSD-cache candidates | [Check slot eligibility](docs/07a-hardware-and-apps.md#ssd-cache-candidates-a-slot-capability-bitmap); this does not authorize creating a cache |
+| Desktop hardware widget or chassis artwork | [Sensor/widget checks](docs/07a-hardware-and-apps.md#verify-fresh-readings) or [custom front/rear SVGs and highlight calibration](docs/12-custom-chassis-display.md) |
+| Firmware maintenance | [Update gates and rollback](docs/08-updates.md); [6.1-specific procedure](docs/11-qts61-upgrade.md) when applicable |
+
+### Reference when needed
+
+- [Troubleshooting](docs/09-troubleshooting.md): symptoms, checks and recovery direction.
+- [Reference hardware/results](docs/case-study.md): tested configurations and validation limits.
+- [English preview gallery](docs/screenshots.md) · [Chinese UI gallery](docs/screenshots.zh-CN.md): fields and examples to compare.
+- [Sources and dependency provenance](docs/sources.md): firmware, loader and primary documentation.
+- [Chinese entry point](README.zh-CN.md): the same task routes with Chinese explanations.
 
 ## Repository contents
 

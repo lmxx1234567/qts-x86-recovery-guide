@@ -1,8 +1,8 @@
 # 6. Recover the original QNAP disk set
 
-<!-- stage-navigation -->
-[← Previous: Map every bay](05-bay-mapping.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Independent boot and acceptance →](07-acceptance.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before normal storage startup:** complete [inventory/backups](01-inventory.md) and [all per-disk HAL mapping checks](05-bay-mapping.md#acceptance-table).
 
 The storage procedure is shared by both release tracks. The original pool was recovered on 5.2 and later on 6.1; see [the version-specific evidence and limits](11-qts61-upgrade.md#1-compatibility-and-prerequisites).
 
@@ -108,8 +108,4 @@ Do not recreate a pool with the old disks, treat a missing SSD tier as optional 
 
 Disconnect unrelated storage where practical and explicitly control which OS boots. An unintended boot into another installed OS can auto-import its pools even if QTS never selected those disks.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Map every bay](05-bay-mapping.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Independent boot and acceptance →](07-acceptance.md)
-<!-- /stage-navigation -->
+**Next:** [verify independent boot and complete data acceptance](07-acceptance.md). Export important data before optional hardware/app changes.

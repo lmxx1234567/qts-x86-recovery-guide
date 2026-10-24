@@ -1,8 +1,8 @@
 # 3. Validate using disposable virtual disks
 
-<!-- stage-navigation -->
-[← Previous: Choose a release](02a-release-tracks.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** prepare the [selected firmware and loader inputs](02-firmware.md#build-inputs). Build commands are in [walkthrough sections 1–6](10-command-walkthrough.md#1-build-machine-and-directory-layout).
 
 Use the selected stable/Beta variables from [release selection](02a-release-tracks.md). The [6.1 VM update procedure](11-qts61-upgrade.md#2-test-the-native-update-in-a-disposable-vm) adds an actual native TS-X73A 5.2→6.1 update and cold start; it does not replace these common storage and boot gates.
 
@@ -55,8 +55,4 @@ The EFI directory acquired additional official files. Existing EFI executable an
 - Treating the remaining SSD tail as a FLASH data device failed to produce a usable data disk. The final design uses a separate data pool.
 - For FW004, inspect the update log and free staging space. Staging under `/mnt/HDA_ROOT` can be too small; use a verified test-data volume with enough space. The code can have other causes.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Choose a release](02a-release-tracks.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Build and install →](04-build-and-install.md)
-<!-- /stage-navigation -->
+**After the VM gates pass:** [collect the physical controller topology](05-bay-mapping.md#concrete-linux-topology-collection), then [build a separate physical candidate](04-build-and-install.md).

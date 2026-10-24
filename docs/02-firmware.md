@@ -1,8 +1,8 @@
 # 2. Firmware, loader and dependencies
 
-<!-- stage-navigation -->
-[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Choose a release →](02a-release-tracks.md)
-<!-- /stage-navigation -->
+[Task index](../README.md#read-in-this-order)
+
+**Before you start:** [choose the release and package family](02a-release-tracks.md).
 
 For concrete commands and environment prerequisites, use the [ordered command walkthrough](10-command-walkthrough.md). Read this chapter for its acceptance gates and limitations.
 
@@ -153,8 +153,4 @@ For a BMC with one virtual CD slot, boot SystemRescue with `copytoram checksum n
 
 **Ready when:** rescue is running independently of the first disc, the payload is accessible and its checksum matches, and the intended disposable boot SSD is positively identified. Only then proceed to [physical writing](10-command-walkthrough.md#8-write-the-physical-boot-ssd-destructive-explicit-target). Original pool disks are not installation targets. Finally remove virtual media and verify an independent boot from the SSD; a successful boot with the rescue or payload disc still attached is not the final acceptance test.
 
----
-
-<!-- stage-navigation -->
-[← Previous: Inventory and backup](01-inventory.md) · [Workflow index](../README.md#read-in-this-order) · [Next: Choose a release →](02a-release-tracks.md)
-<!-- /stage-navigation -->
+**Next:** [Build and test a disposable VM](03-vm-validation.md#build-and-start-the-lab-in-order), using the [shared command walkthrough](10-command-walkthrough.md#1-build-machine-and-directory-layout).

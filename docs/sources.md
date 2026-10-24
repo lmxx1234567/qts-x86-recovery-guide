@@ -1,5 +1,9 @@
 # Sources and provenance
 
+[Task index](../README.md#read-in-this-order)
+
+**Use with:** [release selection](02a-release-tracks.md) and [build-input requirements](02-firmware.md#build-inputs). Sources establish provenance, not hardware compatibility.
+
 Reviewed while documenting the case on 2026-10-18. External pages and downloads can change. Official appliance documentation is context, not certification of generic x86 hardware.
 
 ## Primary documentation
@@ -33,3 +37,5 @@ Checked 2026-10-22:
 - [TS-X73A 6.1 official ZIP](https://download.qnap.com/Storage/TS-X73A/TS-X73A_20261007-6.1.0.3640.zip). Observed ZIP SHA-256: `0c04aa75a6c5b41e9e087eb7fe56d6f28c17a71943464b63d904f5a3a0f41571`. Extracted update `.img` SHA-256: `c73c47801387ebbce7a8d02531b3eca956ae5995828b0ba4dcec4c48731efc8f`.
 
 These hashes identify the retrieved artifacts; they do not replace vendor verification. Private production logs, configuration exports and raw disk images are not source downloads. See [release choices](02a-release-tracks.md) for current versus tested versions.
+
+**Continue with:** [build-input preparation](02-firmware.md#build-inputs), or return to the [task index](../README.md#read-in-this-order).
